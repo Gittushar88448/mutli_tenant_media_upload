@@ -272,7 +272,7 @@ export function Composer({
             Media
           </SectionTitle>
           {visual.length === 0 ? (
-            <button type="button" onClick={() => setPickerOpen(true)} className="grain flex w-full items-center justify-center gap-3 rounded-md border border-dashed py-10 text-sm text-muted-foreground hover:border-foreground/40">
+            <button type="button" onClick={() => setPickerOpen(true)} className="grain flex w-full items-center justify-center gap-3 rounded-xl border border-dashed py-10 text-sm text-muted-foreground hover:border-foreground/40">
               <ImagePlusIcon className="size-5" strokeWidth={1.6} /> Choose a video or photos from the library, or upload new ones
             </button>
           ) : (
@@ -283,8 +283,8 @@ export function Composer({
                   if (!item || item.kind === "audio") return null;
                   return (
                     <div key={m.assetId} className="relative w-32 shrink-0">
-                      <MediaThumb item={item} className="aspect-[9/16] rounded-md border" />
-                      <span className="absolute top-1.5 left-1.5 rounded-[3px] bg-black/70 px-1 font-mono text-[10px] text-white">{String(i + 1).padStart(2, "0")}</span>
+                      <MediaThumb item={item} className="aspect-[9/16] rounded-xl border" />
+                      <span className="absolute top-1.5 left-1.5 rounded-[6px] bg-black/70 px-1 font-mono text-[10px] text-white">{String(i + 1).padStart(2, "0")}</span>
                       <div className="absolute top-1 right-1 flex flex-col gap-1">
                         <IconBtn label="Remove" onClick={() => setMedia((x) => x.filter((y) => y.assetId !== m.assetId))}>
                           <XIcon />
@@ -305,7 +305,7 @@ export function Composer({
                 })}
               </div>
               {hasVideo && (
-                <div className="grid gap-4 rounded-md border bg-card p-4 md:grid-cols-[1.4fr_1fr_1fr]">
+                <div className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-[1.4fr_1fr_1fr]">
                   <TrimFields
                     className="md:col-span-3"
                     durationMs={mediaItems.find((m) => m.kind === "video")?.durationMs}
@@ -467,7 +467,7 @@ export function Composer({
           />
         </div>
 
-        <div className="rounded-md border bg-card p-4">
+        <div className="rounded-xl border bg-card p-4">
           <p className="eyebrow mb-3">When</p>
           <ToggleGroup type="single" value={when} onValueChange={(v) => v && setWhen(v as "now" | "later")} className="w-full">
             <ToggleGroupItem value="now" className="flex-1">
@@ -553,7 +553,7 @@ export function Composer({
                 : `Goes out ${scheduledAt ? formatInTimeZone(scheduledAt, timezone, "EEEE d MMMM 'at' HH:mm") : ""} (${timezone}).`}
             </DialogDescription>
           </DialogHeader>
-          <ul className="divide-y rounded-md border">
+          <ul className="divide-y rounded-xl border">
             {selectedAccounts.map((a) => {
               const t = targets[a.id]!;
               const type = PLATFORMS[a.platform as TargetPlatform].postTypes.find((p) => p.id === t.postType);
@@ -611,9 +611,9 @@ function TargetEditor({
   const textLabel = community ? "Message" : account.platform === "youtube" ? "Description" : "Caption";
   const max = type?.captionMax ?? spec.captionMax;
   return (
-    <div className="grid gap-5 rounded-md border bg-card p-5">
+    <div className="grid gap-5 rounded-xl border bg-card p-5">
       {errors && (
-        <ul className="space-y-1 rounded-md border border-signal/30 bg-signal/[0.06] p-3 text-sm">
+        <ul className="space-y-1 rounded-xl border border-signal/30 bg-signal/[0.06] p-3 text-sm">
           {errors.map((e) => (
             <li key={e} className="flex gap-2">
               <CircleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-signal" /> {e}
@@ -701,7 +701,7 @@ function TargetEditor({
           <Textarea value={state.captionOverride} onChange={(e) => onChange({ captionOverride: e.target.value })} placeholder={`Leave empty to use the main ${community ? "message" : "caption"}`} className="min-h-24" />
         ) : (
           <>
-            <p className="rounded-md border bg-muted/30 px-3 py-2 text-[13px] whitespace-pre-wrap text-muted-foreground">{baseCaption || "Uses the main caption."}</p>
+            <p className="rounded-xl border bg-muted/30 px-3 py-2 text-[13px] whitespace-pre-wrap text-muted-foreground">{baseCaption || "Uses the main caption."}</p>
             <UpgradeHint feature="channelCaptions" />
           </>
         )}
@@ -736,7 +736,7 @@ function ChannelCut({
   const spec = state.editSpec ?? postSpec;
   const set = (patch: Partial<EditSpec>) => onChange({ editSpec: { ...spec, ...patch } });
   return (
-    <div className="grid gap-4 rounded-md border border-dashed p-4">
+    <div className="grid gap-4 rounded-xl border border-dashed p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="flex items-center gap-1.5 text-[13px] font-medium">
@@ -831,7 +831,7 @@ function PollEditor({ poll, onChange, platforms }: { poll: Poll; onChange: (p: P
   const maxAnswers = platforms.includes("mastodon") ? 4 : 10;
   const hasDuration = platforms.some((p) => p === "discord" || p === "mastodon");
   return (
-    <div className="grid gap-4 rounded-md border bg-card p-5">
+    <div className="grid gap-4 rounded-xl border bg-card p-5">
       <div className="grid gap-2">
         <Label htmlFor="poll-q">Question</Label>
         <Input id="poll-q" value={poll.question} maxLength={300} onChange={(e) => onChange({ ...poll, question: e.target.value })} placeholder="What should we build next?" />
@@ -973,7 +973,7 @@ function MediaPicker({
 
 function IconBtn({ children, label, onClick }: { children: React.ReactNode; label: string; onClick: () => void }) {
   return (
-    <button type="button" aria-label={label} onClick={onClick} className="flex size-6 items-center justify-center rounded-[4px] bg-black/65 text-white hover:bg-black/85 [&_svg]:size-3.5">
+    <button type="button" aria-label={label} onClick={onClick} className="flex size-6 items-center justify-center rounded-md bg-black/65 text-white hover:bg-black/85 [&_svg]:size-3.5">
       {children}
     </button>
   );

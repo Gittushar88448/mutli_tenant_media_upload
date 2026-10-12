@@ -25,7 +25,7 @@ export function PublishHeatmap({ cells }: { cells: { d: number; h: number; n: nu
                 <span
                   key={h}
                   title={`${label} ${String(h).padStart(2, "0")}:00 — ${n} published`}
-                  className={cn("h-[18px] rounded-[3px]", n === 0 && "bg-secondary")}
+                  className={cn("h-[18px] rounded-[6px]", n === 0 && "bg-secondary")}
                   style={n ? { backgroundColor: `color-mix(in oklch, var(--signal) ${Math.round(a * 100)}%, transparent)` } : undefined}
                 />
               );

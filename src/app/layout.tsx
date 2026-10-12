@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import "@fontsource/instrument-serif/400.css";
-import "@fontsource/instrument-serif/400-italic.css";
-import "@fontsource-variable/schibsted-grotesk";
-import "@fontsource-variable/jetbrains-mono";
+import { DM_Sans, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+
+// Google Fonts, downloaded at build time and served from this app (no request to Google from the browser).
+const sans = DM_Sans({ subsets: ["latin"], display: "swap", variable: "--font-dm-sans" });
+const display = Sora({ subsets: ["latin"], display: "swap", variable: "--font-sora" });
+const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-jetbrains-mono" });
 
 export const metadata: Metadata = {
   title: { default: "Relay — one post, every channel", template: "%s · Relay" },
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${sans.variable} ${display.variable} ${mono.variable}`}>
       <body className="min-h-dvh">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <TooltipProvider>

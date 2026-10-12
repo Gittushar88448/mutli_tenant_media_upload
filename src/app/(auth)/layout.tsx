@@ -21,7 +21,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
         <div className="relative mt-auto px-10 pb-6">
           <p className="display max-w-[16ch] text-[64px] text-background">
-            Write it once. <em className="text-signal">Send it everywhere</em> on time.
+            Write it once. <em className="text-signal not-italic">Send it everywhere</em> on time.
           </p>
         </div>
         <div className="relative border-t border-background/15 px-10 py-6">

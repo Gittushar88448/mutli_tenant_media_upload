@@ -27,7 +27,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <p className="eyebrow">Sign in</p>
       <h1 className="display mt-3 text-5xl">Back to the desk.</h1>
       <p className="mt-3 text-sm text-muted-foreground">Your queue kept running while you were away.</p>
-      {error && GOOGLE_ERRORS[error] && <p className="mt-6 rounded-md border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive">{GOOGLE_ERRORS[error]}</p>}
+      {error && GOOGLE_ERRORS[error] && <p className="mt-6 rounded-xl border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive">{GOOGLE_ERRORS[error]}</p>}
       {(google || demoMode()) && (
         <>
           <GoogleButton label="Continue with Google" next={next} enabled={google} className="mt-8" />

@@ -85,7 +85,7 @@ export function PlanPicker({
         name: o.name,
         description: o.description,
         prefill: o.prefill,
-        theme: { color: "#E0532F" },
+        theme: { color: "#B5173F" },
         handler: async (resp: RazorpayResponse) => {
           const r = await confirmRazorpayAction(resp);
           if (r.error) toast.error(r.error);
@@ -127,7 +127,7 @@ export function PlanPicker({
         </div>
       </div>
 
-      <div className="grid gap-px overflow-hidden rounded-md border bg-border md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-px overflow-hidden rounded-xl border bg-border md:grid-cols-2 xl:grid-cols-4">
         {PLANS.map((p) => {
           const info = PLAN_INFO[p];
           const limits = PLAN_LIMITS[p];
@@ -138,7 +138,7 @@ export function PlanPicker({
           const unlocksHighlight = highlight && f[highlight] && !planFeatures(current)[highlight];
           return (
             <div key={p} className={cn("relative flex flex-col bg-card p-5", isCurrent && "bg-accent/40", unlocksHighlight && "ring-2 ring-signal ring-inset")}>
-              {p === "studio" && <span className="absolute top-4 right-4 rounded-[3px] bg-signal px-1.5 py-0.5 font-mono text-[9.5px] font-semibold tracking-wider text-signal-foreground uppercase">Popular</span>}
+              {p === "studio" && <span className="absolute top-4 right-4 rounded-[6px] bg-signal px-1.5 py-0.5 font-mono text-[9.5px] font-semibold tracking-wider text-signal-foreground uppercase">Popular</span>}
               <p className="eyebrow">{info.name}</p>
               <p className="mt-3 font-serif text-5xl leading-none tabular-nums">
                 {formatPrice(perMonth)}

@@ -27,7 +27,7 @@ export function SettingsForm({ settings, platforms }: { settings: Settings; plat
     <form action={action} className="space-y-10">
       <section>
         <SectionTitle n="01">General</SectionTitle>
-        <div className="grid gap-6 rounded-md border bg-card p-5 md:grid-cols-2">
+        <div className="grid gap-6 rounded-xl border bg-card p-5 md:grid-cols-2">
           <label className="flex items-start gap-3">
             <Switch name="registrationOpen" defaultChecked={settings.registrationOpen} className="mt-0.5" />
             <span>
@@ -69,7 +69,7 @@ export function SettingsForm({ settings, platforms }: { settings: Settings; plat
       </section>
       <section>
         <SectionTitle n="02">Platforms</SectionTitle>
-        <div className="grid gap-px overflow-hidden rounded-md border bg-border md:grid-cols-2">
+        <div className="grid gap-px overflow-hidden rounded-xl border bg-border md:grid-cols-2">
           {platforms.map((p) => (
             <label key={p.id} className="flex items-center gap-3 bg-card px-4 py-3">
               <PlatformIcon platform={p.id} tone="chip" />

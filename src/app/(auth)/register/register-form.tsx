@@ -32,7 +32,7 @@ export function RegisterForm({ compact }: { compact?: boolean }) {
       <Field id="workspace" label="Workspace name" error={err("workspace")} hint="Usually your brand or client">
         <Input id="workspace" name="workspace" required placeholder="Northwind Studio" aria-invalid={!!err("workspace")} />
       </Field>
-      {state?.error && <p className="rounded-md border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive">{state.error}</p>}
+      {state?.error && <p className="rounded-xl border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive">{state.error}</p>}
       <Button type="submit" size="lg" disabled={pending} className="justify-between">
         Create workspace
         {pending ? <Loader2Icon className="animate-spin" /> : <ArrowRightIcon />}

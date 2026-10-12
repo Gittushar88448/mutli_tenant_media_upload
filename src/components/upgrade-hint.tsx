@@ -14,7 +14,7 @@ export function UpgradeHint({ feature, className, compact }: { feature: Feature;
     );
   }
   return (
-    <div className={cn("flex items-start gap-3 rounded-md border border-dashed bg-muted/40 px-3 py-2.5", className)}>
+    <div className={cn("flex items-start gap-3 rounded-xl border border-dashed bg-muted/40 px-3 py-2.5", className)}>
       <LockIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
       <p className="text-[12.5px] leading-snug text-muted-foreground">
         <span className="font-medium text-foreground">{FEATURE_LABELS[feature].title}</span> is on {PLAN_INFO[plan].name} and above.{" "}

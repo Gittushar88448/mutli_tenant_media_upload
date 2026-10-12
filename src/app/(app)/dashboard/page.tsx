@@ -59,7 +59,7 @@ export default async function Dashboard() {
       />
 
       {nextStep && (
-        <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-md border border-dashed px-5 py-4">
+        <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl border border-dashed px-5 py-4">
           <BookOpenIcon className="size-5 text-signal" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">
@@ -127,12 +127,12 @@ export default async function Dashboard() {
         <section>
           <SectionTitle n="02">Needs attention</SectionTitle>
           {o.attention.length === 0 ? (
-            <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">Every delivery went through. Nothing to fix.</div>
+            <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">Every delivery went through. Nothing to fix.</div>
           ) : (
             <ul className="space-y-2">
               {o.attention.map((a) => (
                 <li key={String(a._id)}>
-                  <Link href={`/posts/${String(a.postId)}`} className="flex gap-3 rounded-md border bg-card p-3 hover:border-foreground/30">
+                  <Link href={`/posts/${String(a.postId)}`} className="flex gap-3 rounded-xl border bg-card p-3 hover:border-foreground/30">
                     <TriangleAlertIcon className="mt-0.5 size-4 shrink-0 text-signal" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export default async function Dashboard() {
           <SectionTitle n="03" aside={<span className="font-mono text-[11px] text-muted-foreground">14 days</span>}>
             Deliveries by channel
           </SectionTitle>
-          <div className="rounded-md border bg-card p-4">
+          <div className="rounded-xl border bg-card p-4">
             {platformsInChart.length === 0 ? (
               <p className="py-16 text-center text-sm text-muted-foreground">Published posts will show up here.</p>
             ) : (
@@ -210,7 +210,7 @@ export default async function Dashboard() {
         <SectionTitle n="05" aside={<span className="font-mono text-[11px] text-muted-foreground">{tz}</span>}>
           When your posts go out
         </SectionTitle>
-        <div className="rounded-md border bg-card p-4">
+        <div className="rounded-xl border bg-card p-4">
           <PublishHeatmap cells={o.heatmap} />
         </div>
       </section>
@@ -230,7 +230,7 @@ function Stat({ label, value, foot, accent }: { label: string; value: React.Reac
 
 function Empty({ text, cta }: { text: string; cta: { href: string; label: string } }) {
   return (
-    <div className="flex items-center justify-between rounded-md border border-dashed p-5 text-sm text-muted-foreground">
+    <div className="flex items-center justify-between rounded-xl border border-dashed p-5 text-sm text-muted-foreground">
       {text}
       <Link href={cta.href} className="font-medium text-foreground underline decoration-signal decoration-2 underline-offset-4">
         {cta.label}

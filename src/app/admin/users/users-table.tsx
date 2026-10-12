@@ -76,7 +76,7 @@ export function UsersTable({ rows, total, page, size }: { rows: AdminUserRow[]; 
               {row.original.name}
               {row.original.role === "admin" && <ShieldIcon className="size-3.5 text-signal" />}
               {row.original.google && (
-                <span title="Signs in with Google" className="rounded-[3px] border px-1 font-mono text-[9.5px] leading-4 text-muted-foreground">
+                <span title="Signs in with Google" className="rounded-[6px] border px-1 font-mono text-[9.5px] leading-4 text-muted-foreground">
                   G
                 </span>
               )}
@@ -281,7 +281,7 @@ function SecretDialog({ secret, onClose }: { secret: { who: string; value: strin
           <DialogTitle>Temporary password</DialogTitle>
           <DialogDescription>For {secret?.who}. It&apos;s shown once; send it over a private channel and ask them to change it.</DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2 rounded-md border bg-muted p-3 font-mono text-sm">
+        <div className="flex items-center gap-2 rounded-xl border bg-muted p-3 font-mono text-sm">
           <span className="flex-1">{secret?.value}</span>
           <Button size="icon-sm" variant="ghost" onClick={() => secret && navigator.clipboard.writeText(secret.value).then(() => toast("Copied"))}>
             <CopyIcon />

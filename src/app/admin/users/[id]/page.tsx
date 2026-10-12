@@ -41,7 +41,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
           <div className="space-y-2">
             {u.memberships.length === 0 && <p className="text-sm text-muted-foreground">Not a member of any workspace.</p>}
             {u.memberships.map((m: any) => (
-              <div key={String(m._id)} className="rounded-md border bg-card p-4">
+              <div key={String(m._id)} className="rounded-xl border bg-card p-4">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{m.ws.name}</span>
                   <Badge variant="outline">{m.role}</Badge>
@@ -63,7 +63,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
         </section>
         <section>
           <SectionTitle n="02">Recent posts</SectionTitle>
-          <ul className="divide-y rounded-md border bg-card">
+          <ul className="divide-y rounded-xl border bg-card">
             {u.recentPosts.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">No posts.</li>}
             {u.recentPosts.map((p: any) => (
               <li key={String(p._id)} className="flex items-center gap-3 px-4 py-3">

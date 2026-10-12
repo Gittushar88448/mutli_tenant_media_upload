@@ -5,97 +5,100 @@
 
 /*
   Relay design tokens.
-  Paper + ink with a single signal colour. Hairline rules instead of shadows,
-  square-ish corners, monospace for anything that is metadata.
+  Light is pearl white with deep navy ink; dark is navy over near-black.
+  One accent colour, cherry red. Rounded cards, soft shadows, monospace for metadata.
 */
 :root {
-  --radius: 0.375rem;
+  --radius: 0.75rem;
 
-  --background: oklch(0.967 0.008 85);      /* newsprint */
-  --foreground: oklch(0.2 0.006 60);        /* ink */
-  --card: oklch(0.985 0.005 85);
+  --background: oklch(0.975 0.006 260);     /* pearl */
+  --foreground: oklch(0.22 0.035 265);      /* navy ink */
+  --card: oklch(0.995 0.002 260);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.99 0.004 85);
+  --popover: oklch(0.995 0.002 260);
   --popover-foreground: var(--foreground);
-  --primary: oklch(0.2 0.006 60);
-  --primary-foreground: oklch(0.975 0.006 85);
-  --secondary: oklch(0.925 0.012 85);
+  --primary: oklch(0.24 0.05 265);
+  --primary-foreground: oklch(0.985 0.004 260);
+  --secondary: oklch(0.94 0.01 260);
   --secondary-foreground: var(--foreground);
-  --muted: oklch(0.935 0.01 85);
-  --muted-foreground: oklch(0.48 0.012 70);
-  --accent: oklch(0.915 0.016 80);
+  --muted: oklch(0.95 0.008 260);
+  --muted-foreground: oklch(0.5 0.025 262);
+  --accent: oklch(0.935 0.014 262);
   --accent-foreground: var(--foreground);
-  --destructive: oklch(0.56 0.2 28);
-  --border: oklch(0.86 0.014 80);
-  --input: oklch(0.84 0.014 80);
-  --ring: oklch(0.63 0.2 36);
+  --destructive: oklch(0.56 0.21 25);
+  --border: oklch(0.9 0.012 262);
+  --input: oklch(0.88 0.014 262);
+  --ring: oklch(0.52 0.2 10);
 
-  --signal: oklch(0.64 0.205 36);           /* vermilion: the one loud colour */
-  --signal-foreground: oklch(0.985 0.005 85);
-  --ok: oklch(0.56 0.12 150);
-  --warn: oklch(0.72 0.14 75);
+  --signal: oklch(0.52 0.2 10);             /* cherry red: the one loud colour */
+  --signal-foreground: oklch(0.99 0.004 260);
+  --ok: oklch(0.56 0.12 155);
+  --warn: oklch(0.7 0.13 90);
+  --shadow-card: 0 1px 2px oklch(0.22 0.035 265 / 0.05), 0 6px 20px -8px oklch(0.22 0.035 265 / 0.12);
 
-  --chart-1: oklch(0.64 0.205 36);
-  --chart-2: oklch(0.2 0.006 60);
-  --chart-3: oklch(0.56 0.12 150);
-  --chart-4: oklch(0.72 0.14 75);
-  --chart-5: oklch(0.55 0.09 250);
+  --chart-1: oklch(0.52 0.2 10);
+  --chart-2: oklch(0.3 0.08 265);
+  --chart-3: oklch(0.56 0.12 155);
+  --chart-4: oklch(0.65 0.16 340);
+  --chart-5: oklch(0.55 0.12 240);
 
-  --sidebar: oklch(0.945 0.011 85);
+  --sidebar: oklch(0.96 0.008 260);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--foreground);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.905 0.016 82);
+  --sidebar-accent: oklch(0.92 0.016 262);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 }
 
 .dark {
-  --background: oklch(0.175 0.006 60);
-  --foreground: oklch(0.93 0.01 85);
-  --card: oklch(0.205 0.007 60);
+  --background: oklch(0.175 0.04 266);      /* deep navy, almost black */
+  --foreground: oklch(0.94 0.01 260);
+  --card: oklch(0.215 0.05 266);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.22 0.007 60);
+  --popover: oklch(0.23 0.052 266);
   --popover-foreground: var(--foreground);
-  --primary: oklch(0.93 0.01 85);
-  --primary-foreground: oklch(0.18 0.006 60);
-  --secondary: oklch(0.255 0.007 60);
+  --primary: oklch(0.94 0.01 260);
+  --primary-foreground: oklch(0.17 0.03 265);
+  --secondary: oklch(0.26 0.055 266);
   --secondary-foreground: var(--foreground);
-  --muted: oklch(0.24 0.007 60);
-  --muted-foreground: oklch(0.68 0.012 80);
-  --accent: oklch(0.27 0.008 60);
+  --muted: oklch(0.245 0.05 266);
+  --muted-foreground: oklch(0.7 0.03 260);
+  --accent: oklch(0.28 0.06 266);
   --accent-foreground: var(--foreground);
-  --destructive: oklch(0.65 0.2 28);
-  --border: oklch(0.3 0.008 60);
-  --input: oklch(0.33 0.008 60);
-  --ring: oklch(0.7 0.18 40);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.31 0.055 266);
+  --input: oklch(0.34 0.06 266);
+  --ring: oklch(0.65 0.2 5);
 
-  --signal: oklch(0.7 0.18 40);
-  --signal-foreground: oklch(0.16 0.006 60);
-  --ok: oklch(0.7 0.13 150);
-  --warn: oklch(0.8 0.13 80);
+  --signal: oklch(0.63 0.21 5);             /* cherry, a touch pinker on dark */
+  --signal-foreground: oklch(0.99 0.004 260);
+  --ok: oklch(0.72 0.13 155);
+  --warn: oklch(0.82 0.12 90);
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 24px -10px oklch(0 0 0 / 0.5);
 
-  --chart-1: oklch(0.7 0.18 40);
-  --chart-2: oklch(0.93 0.01 85);
-  --chart-3: oklch(0.7 0.13 150);
-  --chart-4: oklch(0.8 0.13 80);
-  --chart-5: oklch(0.68 0.1 250);
+  --chart-1: oklch(0.63 0.21 5);
+  --chart-2: oklch(0.85 0.03 260);
+  --chart-3: oklch(0.72 0.13 155);
+  --chart-4: oklch(0.72 0.15 340);
+  --chart-5: oklch(0.68 0.12 240);
 
-  --sidebar: oklch(0.155 0.006 60);
+  --sidebar: oklch(0.15 0.035 266);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--foreground);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.24 0.007 60);
+  --sidebar-accent: oklch(0.25 0.06 266);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 }
 
 @theme inline {
-  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Headings. Kept under the "serif" name so existing font-serif classes pick it up. */
+  --font-serif: var(--font-sora), var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -133,10 +136,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 6px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
 @layer base {
@@ -149,7 +153,6 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-feature-settings: "ss01";
   }
   .num {
     font-variant-numeric: tabular-nums;
@@ -166,12 +169,17 @@
     @apply font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground;
   }
   .display {
-    @apply font-serif font-normal tracking-[-0.01em] leading-[0.95];
+    @apply font-serif font-semibold tracking-[-0.035em] leading-[1.02];
   }
   /* Faint paper grain so large empty areas don't read as flat app chrome. */
   .grain {
     background-image: radial-gradient(color-mix(in oklch, var(--foreground) 7%, transparent) 0.6px, transparent 0.6px);
     background-size: 3px 3px;
+  }
+  /* Cards and boxes: rounded with a soft lift. */
+  .bg-card.border,
+  [data-slot="card"] {
+    box-shadow: var(--shadow-card);
   }
   .rule-dashed {
     background-image: linear-gradient(to right, var(--border) 50%, transparent 0);

@@ -59,7 +59,7 @@ export default async function CommunitiesPage({ searchParams }: { searchParams: 
             Quick message
           </SectionTitle>
           {active.length === 0 ? (
-            <div className="grain rounded-md border border-dashed p-10 text-center">
+            <div className="grain rounded-xl border border-dashed p-10 text-center">
               <p className="font-serif text-2xl">No communities yet.</p>
               <p className="mt-1 text-sm text-muted-foreground">Connect a Telegram channel, WhatsApp group, Discord server or another community below.</p>
             </div>
@@ -76,7 +76,7 @@ export default async function CommunitiesPage({ searchParams }: { searchParams: 
 
         <section>
           <SectionTitle n="02">Last 14 days</SectionTitle>
-          <div className="rounded-md border bg-card p-4">
+          <div className="rounded-xl border bg-card p-4">
             {platformsInChart.length ? <DailyPlatformBars data={o.daily} platforms={platformsInChart} /> : <p className="py-16 text-center text-sm text-muted-foreground">Nothing sent yet.</p>}
           </div>
         </section>
@@ -93,7 +93,7 @@ export default async function CommunitiesPage({ searchParams }: { searchParams: 
             {o.groups.map((g) => {
               const spec = PLATFORMS[g.platform as TargetPlatform];
               return (
-                <article key={g.id} className="flex flex-col rounded-md border bg-card">
+                <article key={g.id} className="flex flex-col rounded-xl border bg-card">
                   <div className="flex items-center gap-3 border-b px-4 py-3" style={{ backgroundColor: `color-mix(in oklab, ${spec.color} 8%, transparent)` }}>
                     <PlatformIcon platform={g.platform} tone="chip" className="size-9 rounded-full p-2" />
                     <div className="min-w-0 flex-1">
@@ -147,7 +147,7 @@ export default async function CommunitiesPage({ searchParams }: { searchParams: 
         {o.recent.length === 0 ? (
           <p className="text-sm text-muted-foreground">Messages you send or schedule appear here.</p>
         ) : (
-          <div className="overflow-hidden rounded-md border bg-card">
+          <div className="overflow-hidden rounded-xl border bg-card">
             {o.recent.map((r) => {
               const spec = PLATFORMS[r.platform as TargetPlatform];
               return (

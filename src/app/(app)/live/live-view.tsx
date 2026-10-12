@@ -156,7 +156,7 @@ export function LiveView({ data, initialTab, initialPlatform, canReply }: { data
               </Button>
             </Empty>
           ) : (
-            <div className="overflow-hidden rounded-md border bg-card">
+            <div className="overflow-hidden rounded-xl border bg-card">
               {posts.map((r) => (
                 <PostRow key={r.id} row={r} />
               ))}
@@ -281,7 +281,7 @@ function CommentsTab({ rows, posts, canReply, platform }: { rows: LiveInboxRow[]
           )}
         </Empty>
       ) : (
-        <div className="overflow-hidden rounded-md border bg-card">
+        <div className="overflow-hidden rounded-xl border bg-card">
           {rows.map((r) => (
             <CommentItem key={`${r.targetId}:${r.comment.id}`} row={r} canReply={canReply} />
           ))}
@@ -411,7 +411,7 @@ function ChannelCard({ c }: { c: LiveChannelRow }) {
   const caps = liveCaps(c.platform);
   const reads = [caps.metrics.length ? caps.metrics.map((k) => METRIC_LABEL[k].toLowerCase()).join(", ") : null, caps.comments ? "comments" : null, caps.reply ? "replies" : null].filter(Boolean);
   return (
-    <article className="flex min-w-0 flex-col rounded-md border bg-card">
+    <article className="flex min-w-0 flex-col rounded-xl border bg-card">
       <div className="flex items-center gap-3 border-b px-4 py-3" style={{ backgroundColor: spec ? `color-mix(in oklab, ${spec.color} 8%, transparent)` : undefined }}>
         <PlatformIcon platform={c.platform} tone="chip" className="size-9 rounded-full p-2" />
         <div className="min-w-0 flex-1">
@@ -503,7 +503,7 @@ function Metric({ label, value, small }: { label: string; value: React.ReactNode
 
 function Empty({ title, body, children }: { title: string; body: string; children?: React.ReactNode }) {
   return (
-    <div className="grain rounded-md border border-dashed p-10 text-center md:p-14">
+    <div className="grain rounded-xl border border-dashed p-10 text-center md:p-14">
       <p className="font-serif text-2xl">{title}</p>
       <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{body}</p>
       {children && <div className="mt-4 flex justify-center">{children}</div>}

@@ -43,7 +43,7 @@ export function WorkspaceForm({ name, timezone, requireApproval, zones, disabled
   const [state, action, pending] = useActionState(updateWorkspaceAction, undefined);
   useToastState(state);
   return (
-    <form action={action} className="grid gap-5 rounded-md border bg-card p-5">
+    <form action={action} className="grid gap-5 rounded-xl border bg-card p-5">
       <div className="grid gap-2">
         <Label htmlFor="ws-name">Name</Label>
         <Input id="ws-name" name="name" defaultValue={name} disabled={disabled} />
@@ -73,7 +73,7 @@ export function ProfileForm({ name, email, timezone, zones }: { name: string; em
   const [state, action, pending] = useActionState(updateProfileAction, undefined);
   useToastState(state);
   return (
-    <form action={action} className="grid gap-5 rounded-md border bg-card p-5">
+    <form action={action} className="grid gap-5 rounded-xl border bg-card p-5">
       <div className="grid gap-2">
         <Label htmlFor="p-name">Name</Label>
         <Input id="p-name" name="name" defaultValue={name} />
@@ -98,7 +98,7 @@ type Member = { userId: string; role: string; name: string; email: string; lastL
 export function MembersTable({ members, canManage, selfId }: { members: Member[]; canManage: boolean; selfId: string }) {
   const [pending, start] = useTransition();
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
+    <div className="overflow-hidden rounded-xl border bg-card">
       <Table>
         <TableHeader>
           <TableRow>

@@ -171,7 +171,7 @@ export function EditTargetButton({
               </div>
               {lockedText ? (
                 <>
-                  <p className="rounded-md border bg-muted/30 px-3 py-2 text-[13px] whitespace-pre-wrap text-muted-foreground">{baseCaption || "Uses the post's caption."}</p>
+                  <p className="rounded-xl border bg-muted/30 px-3 py-2 text-[13px] whitespace-pre-wrap text-muted-foreground">{baseCaption || "Uses the post's caption."}</p>
                   <UpgradeHint feature="channelCaptions" />
                 </>
               ) : (
@@ -208,7 +208,7 @@ export function EditTargetButton({
             )}
 
             {showCut && (
-              <div className="grid gap-4 rounded-md border border-dashed p-4">
+              <div className="grid gap-4 rounded-xl border border-dashed p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="flex items-center gap-1.5 text-[13px] font-medium">
@@ -282,7 +282,7 @@ export function EditTargetButton({
                     <Button variant="outline" size="sm" className="justify-self-start" disabled={rendering} onClick={render}>
                       {rendering ? <Loader2Icon className="animate-spin" /> : <ClapperboardIcon />} {rendering ? "Rendering…" : "Render preview"}
                     </Button>
-                    {preview && <video src={preview} controls playsInline className={cn("max-h-80 w-full rounded-md border bg-black")} />}
+                    {preview && <video src={preview} controls playsInline className={cn("max-h-80 w-full rounded-xl border bg-black")} />}
                   </div>
                 )}
               </div>

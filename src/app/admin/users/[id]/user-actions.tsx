@@ -30,7 +30,7 @@ export function UserDetailActions({ id, role, status, email }: { id: string; rol
     });
   return (
     <>
-      {temp && <span className="rounded-md border bg-muted px-2 py-1 font-mono text-xs">{temp}</span>}
+      {temp && <span className="rounded-xl border bg-muted px-2 py-1 font-mono text-xs">{temp}</span>}
       <Button variant="outline" disabled={pending} onClick={() => run(() => adminResetPassword(id))}>
         Reset password
       </Button>

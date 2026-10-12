@@ -406,7 +406,7 @@ export function MediaEditor({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-3">
-          <div className="relative flex min-h-[280px] items-center justify-center overflow-hidden rounded-md border bg-[#141414] p-3 sm:p-6">
+          <div className="relative flex min-h-[280px] items-center justify-center overflow-hidden rounded-xl border bg-[oklch(0.16_0.025_265)] p-3 sm:p-6">
             {/* The real file is hidden; the canvas shows the edited preview. */}
             {isVideo ? (
               <video
@@ -481,7 +481,7 @@ export function MediaEditor({
           </div>
 
           {isVideo && (
-            <div className="rounded-md border bg-card p-4">
+            <div className="rounded-xl border bg-card p-4">
               <div className="mb-3 flex items-center justify-between">
                 <Label>Trim</Label>
                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
@@ -534,7 +534,7 @@ export function MediaEditor({
                     key={r.id}
                     type="button"
                     onClick={() => setRatio(r.id)}
-                    className={cn("rounded-[4px] border px-2 py-1.5 font-mono text-[11.5px]", ratioId === r.id ? "border-foreground bg-foreground text-background" : "hover:border-foreground/40")}
+                    className={cn("rounded-lg border px-2 py-1.5 font-mono text-[11.5px]", ratioId === r.id ? "border-foreground bg-foreground text-background" : "hover:border-foreground/40")}
                   >
                     {r.label}
                   </button>
@@ -577,7 +577,7 @@ export function MediaEditor({
                   <p className="eyebrow mb-2 flex items-center gap-1.5">
                     <PackageIcon className="size-3" /> Filter store
                   </p>
-                  <ul className="divide-y rounded-md border">
+                  <ul className="divide-y rounded-xl border">
                     {packs
                       .filter((p) => !p.builtIn)
                       .map((p) => (
@@ -599,7 +599,7 @@ export function MediaEditor({
                 <section>
                   <p className="eyebrow mb-2">Your filters</p>
                   {custom.length > 0 && (
-                    <ul className="mb-3 divide-y rounded-md border">
+                    <ul className="mb-3 divide-y rounded-xl border">
                       {custom.map((f) => (
                         <li key={f.id} className="flex items-center gap-2 py-1.5 pr-1.5 pl-3">
                           <button type="button" className="min-w-0 flex-1 truncate text-left text-sm" onClick={() => chooseFilter(f)}>
@@ -611,7 +611,7 @@ export function MediaEditor({
                       ))}
                     </ul>
                   )}
-                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground hover:border-foreground/40 hover:text-foreground">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-sm text-muted-foreground hover:border-foreground/40 hover:text-foreground">
                     <UploadIcon className="size-4" /> Import a .cube LUT or .relayfilter
                     <input
                       type="file"
@@ -627,7 +627,7 @@ export function MediaEditor({
                   </label>
                 </section>
                 {filterId && !filterId.startsWith("custom:") && (
-                  <div className="flex items-center justify-between gap-2 rounded-md border p-3 text-sm">
+                  <div className="flex items-center justify-between gap-2 rounded-xl border p-3 text-sm">
                     <span className="truncate">{allFilters.find((f) => f.id === filterId)?.name}</span>
                     <FilterMenu id={filterId} />
                   </div>
@@ -722,7 +722,7 @@ export function MediaEditor({
                         <Label>Length</Label>
                         <div className="grid grid-cols-4 gap-1.5">
                           {[5_000, 10_000, 15_000, 30_000].map((ms) => (
-                            <button key={ms} type="button" onClick={() => setStillMs(ms)} className={cn("rounded-[4px] border px-2 py-1.5 font-mono text-[11.5px]", stillMs === ms ? "border-foreground bg-foreground text-background" : "hover:border-foreground/40")}>
+                            <button key={ms} type="button" onClick={() => setStillMs(ms)} className={cn("rounded-lg border px-2 py-1.5 font-mono text-[11.5px]", stillMs === ms ? "border-foreground bg-foreground text-background" : "hover:border-foreground/40")}>
                               {ms / 1000}s
                             </button>
                           ))}
@@ -778,12 +778,12 @@ function fmtMs(ms: number) {
 function FilterTile({ name, src, active, onClick, lut }: { name: string; src?: string; active: boolean; onClick: () => void; lut?: boolean }) {
   return (
     <button type="button" onClick={onClick} className="group text-left" aria-pressed={active} data-testid="filter-tile">
-      <div className={cn("relative aspect-square overflow-hidden rounded-[4px] border-2 bg-muted", active ? "border-signal" : "border-transparent group-hover:border-foreground/30")}>
+      <div className={cn("relative aspect-square overflow-hidden rounded-xl border-2 bg-muted", active ? "border-signal" : "border-transparent group-hover:border-foreground/30")}>
         {src && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt="" className="size-full object-cover" />
         )}
-        {lut && <span className="absolute right-1 bottom-1 rounded-[2px] bg-black/70 px-1 font-mono text-[9px] text-white">LUT</span>}
+        {lut && <span className="absolute right-1 bottom-1 rounded-[5px] bg-black/70 px-1 font-mono text-[9px] text-white">LUT</span>}
       </div>
       <p className={cn("mt-1 truncate text-[11.5px]", active ? "font-medium" : "text-muted-foreground")}>{name}</p>
     </button>

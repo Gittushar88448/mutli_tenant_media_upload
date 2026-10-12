@@ -19,7 +19,7 @@ export function MediaThumb({ item, className, fit = "cover" }: { item: Pick<Medi
         </div>
       )}
       {item.durationMs ? (
-        <span className="absolute right-1.5 bottom-1.5 rounded-[3px] bg-black/70 px-1 font-mono text-[10px] text-white">{formatDuration(item.durationMs)}</span>
+        <span className="absolute right-1.5 bottom-1.5 rounded-[6px] bg-black/70 px-1 font-mono text-[10px] text-white">{formatDuration(item.durationMs)}</span>
       ) : null}
     </div>
   );

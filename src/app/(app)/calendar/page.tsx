@@ -42,7 +42,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         eyebrow={`Calendar · ${tz}`}
         title={
           <>
-            {format(anchor, "MMMM")} <span className="text-muted-foreground italic">{format(anchor, "yyyy")}</span>
+            {format(anchor, "MMMM")} <span className="text-muted-foreground">{format(anchor, "yyyy")}</span>
           </>
         }
         description={`${total} post${total === 1 ? "" : "s"} in view, shown in your workspace timezone.`}
@@ -65,7 +65,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         }
       />
       <div className="overflow-x-auto">
-        <div className="min-w-[760px] overflow-hidden rounded-md border bg-card">
+        <div className="min-w-[760px] overflow-hidden rounded-xl border bg-card">
           <div className="grid grid-cols-7 border-b">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
               <div key={d} className="eyebrow px-3 py-2">
@@ -96,7 +96,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       <Link
                         key={String(p.id)}
                         href={`/posts/${String(p.id)}`}
-                        className={cn("block rounded-[4px] border border-l-[3px] bg-background px-1.5 py-1 text-[11.5px] hover:border-foreground/30", STATUS_BAR[p.status] ?? "border-l-foreground")}
+                        className={cn("block rounded-xl border border-l-[3px] bg-background px-1.5 py-1 text-[11.5px] hover:border-foreground/30", STATUS_BAR[p.status] ?? "border-l-foreground")}
                       >
                         <div className="flex items-center gap-1">
                           <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{formatInTimeZone(p.at, tz, "HH:mm")}</span>

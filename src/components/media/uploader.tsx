@@ -99,7 +99,7 @@ export function MediaUploader({
           if (e.dataTransfer.files.length) handle(e.dataTransfer.files);
         }}
         className={cn(
-          "grain flex w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed text-center transition-colors hover:border-foreground/40",
+          "grain flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-center transition-colors hover:border-foreground/40",
           compact ? "py-5" : "py-10",
           drag && "border-signal bg-signal/5"
         )}
@@ -112,7 +112,7 @@ export function MediaUploader({
       {jobs.length > 0 && (
         <ul className="mt-3 space-y-2">
           {jobs.map((j) => (
-            <li key={j.name} className="rounded-md border bg-card px-3 py-2">
+            <li key={j.name} className="rounded-xl border bg-card px-3 py-2">
               <div className="flex justify-between text-xs">
                 <span className="truncate">{j.name}</span>
                 <span className="font-mono text-muted-foreground">{formatBytes(j.size)}</span>

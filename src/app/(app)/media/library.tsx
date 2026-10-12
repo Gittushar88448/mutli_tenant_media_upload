@@ -39,7 +39,7 @@ export function MediaLibrary({ initial, openId, canEdit }: { initial: Item[]; op
             router.refresh();
           }}
         />
-        <div className="rounded-md border bg-card p-4 text-xs leading-relaxed text-muted-foreground">
+        <div className="rounded-xl border bg-card p-4 text-xs leading-relaxed text-muted-foreground">
           <p className="eyebrow mb-2">Specs that travel well</p>
           <p>
             Vertical 9:16 MP4 (H.264, AAC) at 1080×1920 works for Reels, Shorts and TikTok. Use 4:5 photos for Instagram feed and 16:9 for YouTube videos.
@@ -56,7 +56,7 @@ export function MediaLibrary({ initial, openId, canEdit }: { initial: Item[]; op
           </ToggleGroup>
         </div>
         {shown.length === 0 ? (
-          <div className="rounded-md border border-dashed p-16 text-center">
+          <div className="rounded-xl border border-dashed p-16 text-center">
             <p className="font-serif text-2xl">Nothing here yet.</p>
             <p className="mt-1 text-sm text-muted-foreground">Upload a video, photo or audio track to get started.</p>
           </div>
@@ -64,7 +64,7 @@ export function MediaLibrary({ initial, openId, canEdit }: { initial: Item[]; op
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((m) => (
               <button key={m.id} onClick={() => setOpen(m)} className="group text-left">
-                <MediaThumb item={m} className="aspect-[4/5] rounded-md border transition-transform group-hover:-translate-y-0.5" />
+                <MediaThumb item={m} className="aspect-[4/5] rounded-xl border transition-transform group-hover:-translate-y-0.5" />
                 <div className="mt-1.5 flex items-center justify-between gap-2">
                   <span className="truncate text-xs">{m.filename}</span>
                   <span className="shrink-0 font-mono text-[10px] text-muted-foreground uppercase">{m.kind}</span>

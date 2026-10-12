@@ -21,7 +21,7 @@ export function GoogleButton({ label, next, enabled, className }: { label: strin
     </>
   );
   const cls = cn(
-    "inline-flex h-11 w-full items-center justify-center gap-3 rounded-md border bg-card px-4 text-sm font-medium transition-colors",
+    "inline-flex h-11 w-full items-center justify-center gap-3 rounded-xl border bg-card px-4 text-sm font-medium transition-colors",
     enabled ? "hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none" : "cursor-not-allowed opacity-50",
     className
   );

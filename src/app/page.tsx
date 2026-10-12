@@ -48,7 +48,7 @@ export default async function Landing() {
           <h1 className="display mt-5 text-[64px] sm:text-[84px] lg:text-[104px]">
             One upload.
             <br />
-            <em className="text-signal">Every</em> feed.
+            <em className="text-signal not-italic">Every</em> feed.
           </h1>
           <p className="mt-6 max-w-[46ch] text-lg leading-relaxed text-muted-foreground">
             Connect Instagram, TikTok, YouTube, Facebook and the rest. Write the post once, tune it per channel, and send it now or at the minute you choose. If one platform fails, the others still go out.
@@ -69,10 +69,10 @@ export default async function Landing() {
           <div className="rounded-xl border bg-card p-5 shadow-[0_40px_80px_-40px_rgb(0_0_0/0.35)]">
             <div className="flex items-center justify-between border-b pb-3">
               <span className="eyebrow">Post · Tue 09:00 · Asia/Kolkata</span>
-              <span className="rounded-[4px] bg-signal px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-signal-foreground">Live</span>
+              <span className="rounded-md bg-signal px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-signal-foreground">Live</span>
             </div>
             <div className="mt-4 grid grid-cols-[96px_1fr] gap-4">
-              <div className="aspect-[9/16] overflow-hidden rounded-md bg-[linear-gradient(160deg,oklch(0.42_0.08_40),oklch(0.2_0.02_60))]">
+              <div className="aspect-[9/16] overflow-hidden rounded-md bg-[linear-gradient(160deg,oklch(0.45_0.17_10),oklch(0.2_0.05_265))]">
                 <div className="flex h-full items-end p-2">
                   <span className="font-mono text-[9px] text-white/70">0:24 · 9:16</span>
                 </div>

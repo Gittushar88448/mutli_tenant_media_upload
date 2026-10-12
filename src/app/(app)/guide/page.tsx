@@ -56,7 +56,7 @@ export default async function GuidePage() {
         description="Connect your platforms and communities, write once for all of them, and pick the plan that fits. Each section links to the page where you do it."
       />
 
-      <section aria-labelledby="setup-title" className="rounded-md border bg-card">
+      <section aria-labelledby="setup-title" className="rounded-xl border bg-card">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-5 py-4">
           <h2 id="setup-title" className="text-[15px] font-semibold tracking-tight">
             Set up {ctx.workspace.name}
@@ -97,7 +97,7 @@ export default async function GuidePage() {
             <p className="max-w-3xl text-[15px] leading-relaxed">
               Relay is one desk for everywhere you publish. You connect your accounts once, write a post once, adjust it for each platform where you need to, and Relay sends it at the right time. Every channel reports back on its own, so one failure never holds up the others.
             </p>
-            <ol className="mt-6 grid gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            <ol className="mt-6 grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { t: "Connect", d: "Social accounts sign in with their own login. Communities use a bot, webhook or app password.", href: "/accounts" },
                 { t: "Write", d: "One post with media. Tailor the text, title or video cut per channel.", href: "/compose" },
@@ -125,7 +125,7 @@ export default async function GuidePage() {
                 Go to <b>Channels → Add a platform</b> and press <b>Connect</b>. You sign in on the platform&apos;s own page and approve Relay there, so Relay never sees your password. Its access is stored encrypted and renewed automatically. Only workspace owners and admins can connect channels.
               </p>
               {demo && (
-                <p className="flex gap-2 rounded-md border border-dashed px-3 py-2 text-[13px] text-muted-foreground">
+                <p className="flex gap-2 rounded-xl border border-dashed px-3 py-2 text-[13px] text-muted-foreground">
                   <FlaskConicalIcon className="mt-0.5 size-3.5 shrink-0" />
                   <span>
                     Platforms marked <b className="font-medium text-foreground">Sandbox only</b> haven&apos;t been set up on this server yet. You can still add a sandbox channel to try them; it behaves like the real thing without posting anywhere.
@@ -133,7 +133,7 @@ export default async function GuidePage() {
                 </p>
               )}
             </div>
-            <div className="mt-5 overflow-x-auto rounded-md border bg-card">
+            <div className="mt-5 overflow-x-auto rounded-xl border bg-card">
               <table className="w-full min-w-[760px] text-left text-[13px]">
                 <thead className="border-b font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
                   <tr>
@@ -169,13 +169,13 @@ export default async function GuidePage() {
               </table>
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-md border p-4">
+              <div className="rounded-xl border p-4">
                 <p className="flex items-center gap-2 text-sm font-medium">
                   <PlatformIcon platform="webhook" className="size-4" /> Webhook
                 </p>
                 <p className="mt-1 text-[13px] leading-snug text-muted-foreground">{PLATFORMS.webhook.notes} Every request is signed, so your endpoint can check it came from Relay.</p>
               </div>
-              <div className="rounded-md border p-4">
+              <div className="rounded-xl border p-4">
                 <p className="flex items-center gap-2 text-sm font-medium">
                   <PlatformIcon platform="manual" className="size-4" /> Manual reminder
                 </p>
@@ -192,7 +192,7 @@ export default async function GuidePage() {
               Groups, channels and servers connect with a bot, a webhook or an app password instead of a sign-in page. Relay checks the details with the platform before saving them. Once connected, a community shows up in the composer next to your social accounts, and in <b>Communities</b>, where one box sends a message or poll to all of them.
             </p>
             <CommunityTabs connected={connected} canManage={canManage} />
-            <div className="mt-6 rounded-md border">
+            <div className="mt-6 rounded-xl border">
               <p className="border-b px-4 py-2.5 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">No posting API, and what to do instead</p>
               <dl className="divide-y">
                 {NO_API.map((x) => (
@@ -209,7 +209,7 @@ export default async function GuidePage() {
             <SectionTitle n="04" aside={<Link href="/compose" className="text-xs text-muted-foreground hover:text-foreground">Compose →</Link>}>
               Write and schedule
             </SectionTitle>
-            <div className="grid gap-px overflow-hidden rounded-md border bg-border md:grid-cols-2">
+            <div className="grid gap-px overflow-hidden rounded-xl border bg-border md:grid-cols-2">
               {[
                 { t: "One post, many channels", d: "Pick channels at the top of the composer. The main text and media go to all of them, each checked against that platform's limits as you type." },
                 { t: "Different text per platform", d: "Open a channel's tab to give it its own caption, description, title or headline, plus options like subreddit, visibility or silent send.", f: "channelCaptions" as Feature },
@@ -242,7 +242,7 @@ export default async function GuidePage() {
             <SectionTitle n="05" aside={<Link href="/media" className="text-xs text-muted-foreground hover:text-foreground">Media →</Link>}>
               Edit media and add music
             </SectionTitle>
-            <div className="grid gap-px overflow-hidden rounded-md border bg-border md:grid-cols-2">
+            <div className="grid gap-px overflow-hidden rounded-xl border bg-border md:grid-cols-2">
               {[
                 { t: "Crop, rotate and trim", d: "Open any photo or video in Media and press Edit. Crop freely or to 1:1, 4:5, 9:16, 16:9 or 1.91:1, rotate, flip, and trim a video. Save keeps the original and adds an edited copy." },
                 { t: "Filters", d: "Essentials come built in. Install more packs (Film, Moody, Vintage, Food & Travel) from the filter store on the Filters tab. Hold to compare shows the original.", f: "mediaStudio" as Feature },
@@ -286,7 +286,7 @@ export default async function GuidePage() {
             <p className="mb-5 max-w-3xl text-[14px] leading-relaxed">
               Every plan can publish everywhere. Paid plans add room (channels, posts, storage, seats) and the tools for tailoring each platform. You&apos;re on <b>{PLAN_INFO[plan].name}</b>.
             </p>
-            <div className="overflow-x-auto rounded-md border bg-card">
+            <div className="overflow-x-auto rounded-xl border bg-card">
               <table className="w-full min-w-[720px] text-left text-[13px]">
                 <thead>
                   <tr className="border-b">
@@ -363,7 +363,7 @@ export default async function GuidePage() {
             <p className="mb-5 max-w-3xl text-[14px] leading-relaxed">
               Add people in <b>Settings → Members</b> with the email they signed up with, and give each a role. Turn on <b>Require approval</b> in Settings to have an approver check editors&apos; posts before they go out. You are {ctx.role === "owner" ? "the" : ctx.role === "viewer" ? "a" : "an"} <b>{ctx.role}</b> here.
             </p>
-            <div className="overflow-x-auto rounded-md border bg-card">
+            <div className="overflow-x-auto rounded-xl border bg-card">
               <table className="w-full min-w-[640px] text-left text-[13px]">
                 <thead className="border-b font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
                   <tr>
@@ -393,7 +393,7 @@ export default async function GuidePage() {
 
           <section id="faq" className="scroll-mt-20">
             <SectionTitle n="09">Questions</SectionTitle>
-            <Accordion type="multiple" className="rounded-md border bg-card px-4">
+            <Accordion type="multiple" className="rounded-xl border bg-card px-4">
               {FAQ.map((f, i) => (
                 <AccordionItem key={i} value={String(i)}>
                   <AccordionTrigger>{f.q}</AccordionTrigger>

@@ -154,7 +154,7 @@ export function MusicPicker({ open, onOpenChange, onPicked, unlocked }: { open: 
                 <ul className={cn("divide-y", loading && "opacity-60")}>
                   {tracks?.map((t) => (
                     <li key={t.id} className="flex items-center gap-3 px-5 py-2.5" data-testid="music-track">
-                      <button type="button" onClick={() => toggle(t)} aria-label={playing === t.id ? `Pause ${t.title}` : `Play ${t.title}`} className="relative size-10 shrink-0 overflow-hidden rounded-[4px] bg-foreground text-background">
+                      <button type="button" onClick={() => toggle(t)} aria-label={playing === t.id ? `Pause ${t.title}` : `Play ${t.title}`} className="relative size-10 shrink-0 overflow-hidden rounded-md bg-foreground text-background">
                         {t.image && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={t.image} alt="" className="absolute inset-0 size-full object-cover opacity-70" />

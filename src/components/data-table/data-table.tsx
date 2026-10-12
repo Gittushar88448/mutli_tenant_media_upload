@@ -152,7 +152,7 @@ export function DataTable<TData>({
       </div>
 
       {selected.length > 0 && bulkActions && (
-        <div className="flex items-center gap-3 rounded-md border border-foreground bg-foreground px-3 py-2 text-background">
+        <div className="flex items-center gap-3 rounded-xl border border-foreground bg-foreground px-3 py-2 text-background">
           <span className="font-mono text-xs">{selected.length} selected</span>
           <div className="flex flex-wrap items-center gap-2 [&_button]:h-7">{bulkActions(selected, () => setRowSelection({}))}</div>
           <button className="ml-auto text-xs opacity-70 hover:opacity-100" onClick={() => setRowSelection({})}>
@@ -161,7 +161,7 @@ export function DataTable<TData>({
         </div>
       )}
 
-      <div className={cn("overflow-hidden rounded-md border bg-card transition-opacity", pending && "opacity-60")}>
+      <div className={cn("overflow-hidden rounded-xl border bg-card transition-opacity", pending && "opacity-60")}>
         <Table>
           <TableHeader className="bg-muted/40">
             {table.getHeaderGroups().map((hg) => (

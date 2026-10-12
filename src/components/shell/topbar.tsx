@@ -60,7 +60,7 @@ export function Topbar({ data, notifications, mode = "app" }: { data: ShellData;
 
       <button
         onClick={() => setCmdOpen(true)}
-        className="flex h-8 w-full max-w-sm items-center gap-2 rounded-md border bg-card/50 px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-card"
+        className="flex h-8 w-full max-w-sm items-center gap-2 rounded-xl border bg-card/50 px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-card"
       >
         <SearchIcon className="size-3.5" />
         Jump to…

@@ -63,7 +63,7 @@ export default async function PostDetail({ params }: { params: Promise<{ id: str
               const stepIdx = STEPS.indexOf(t.status);
               const spec = PLATFORMS[t.platform as TargetPlatform];
               return (
-                <div key={String(t._id)} className="rounded-md border bg-card">
+                <div key={String(t._id)} className="rounded-xl border bg-card">
                   <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
                     <PlatformIcon platform={t.platform} tone="chip" className="size-7 p-1.5" />
                     <div className="min-w-0 flex-1">
@@ -168,7 +168,7 @@ export default async function PostDetail({ params }: { params: Promise<{ id: str
                       {t.options?.headline && <p className="font-semibold">{t.options.headline}</p>}
                       {t.captionOverride && <p className="whitespace-pre-wrap text-muted-foreground">{t.captionOverride}</p>}
                       {t.postType === "poll" && post.poll?.question && (
-                        <div className="rounded-md border bg-muted/30 px-3 py-2">
+                        <div className="rounded-xl border bg-muted/30 px-3 py-2">
                           <p className="font-medium">{post.poll.question}</p>
                           <ul className="mt-1 list-inside list-disc text-muted-foreground">
                             {post.poll.options.map((o: string) => (
@@ -193,7 +193,7 @@ export default async function PostDetail({ params }: { params: Promise<{ id: str
               <div className="grid grid-cols-3 gap-2">
                 {post.media.map((m: { assetId: unknown }) => {
                   const a = post.assets.find((x: { _id: unknown }) => String(x._id) === String(m.assetId));
-                  return a ? <MediaThumb key={String(a._id)} item={{ id: String(a._id), kind: a.kind, durationMs: a.durationMs }} className="aspect-square rounded-md border" /> : null;
+                  return a ? <MediaThumb key={String(a._id)} item={{ id: String(a._id), kind: a.kind, durationMs: a.durationMs }} className="aspect-square rounded-xl border" /> : null;
                 })}
               </div>
             )}

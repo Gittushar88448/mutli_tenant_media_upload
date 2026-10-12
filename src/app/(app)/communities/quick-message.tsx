@@ -102,7 +102,7 @@ export function QuickMessage({ groups, timezone, canPost, pollsUnlocked, needsAp
   }
 
   return (
-    <div className="rounded-md border bg-card">
+    <div className="rounded-xl border bg-card">
       <div className="flex flex-wrap gap-2 border-b p-4">
         {groups.map((g) => {
           const on = selected.includes(g.id);
@@ -149,7 +149,7 @@ export function QuickMessage({ groups, timezone, canPost, pollsUnlocked, needsAp
         />
 
         {kind === "poll" && (
-          <div className="grid gap-2 rounded-md border border-dashed p-3">
+          <div className="grid gap-2 rounded-xl border border-dashed p-3">
             <Input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={300} placeholder="Poll question" />
             {answers.map((a, i) => (
               <div key={i} className="flex items-center gap-2">

@@ -20,7 +20,7 @@ export function LoginForm({ next, compact }: { next?: string; compact?: boolean 
         <Label htmlFor="password">Password</Label>
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </div>
-      {state?.error && <p className="rounded-md border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive">{state.error}</p>}
+      {state?.error && <p className="rounded-xl border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive">{state.error}</p>}
       <Button type="submit" size="lg" disabled={pending} className="justify-between">
         Sign in
         {pending ? <Loader2Icon className="animate-spin" /> : <ArrowRightIcon />}

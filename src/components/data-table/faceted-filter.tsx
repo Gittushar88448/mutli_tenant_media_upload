@@ -58,7 +58,7 @@ export function DataTableFacetedFilter({ param, title, options }: { param: strin
                       update(s);
                     }}
                   >
-                    <span className={cn("flex size-4 items-center justify-center rounded-[4px] border", on ? "border-primary bg-primary text-primary-foreground" : "opacity-60")}>
+                    <span className={cn("flex size-4 items-center justify-center rounded-[5px] border", on ? "border-primary bg-primary text-primary-foreground" : "opacity-60")}>
                       {on && <CheckIcon className="size-3 text-primary-foreground" />}
                     </span>
                     {o.icon}

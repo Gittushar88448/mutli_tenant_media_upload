@@ -58,7 +58,7 @@ export function ChannelList({ rows, canManage }: { rows: Row[]; canManage: boole
 
   if (rows.length === 0) {
     return (
-      <div className="grain rounded-md border border-dashed p-10 text-center">
+      <div className="grain rounded-xl border border-dashed p-10 text-center">
         <p className="font-serif text-2xl">No channels yet.</p>
         <p className="mt-1 text-sm text-muted-foreground">Connect a platform below to start publishing.</p>
       </div>
@@ -67,7 +67,7 @@ export function ChannelList({ rows, canManage }: { rows: Row[]; canManage: boole
 
   return (
     <>
-      <div className="overflow-hidden rounded-md border bg-card">
+      <div className="overflow-hidden rounded-xl border bg-card">
         {rows.map((r) => {
           const expSoon = r.expiresAt && msFromNow(r.expiresAt) < 7 * 86400000;
           return (
@@ -208,7 +208,7 @@ export function ConnectGrid({
 
   return (
     <>
-      <div className="grid gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 xl:grid-cols-4">
         {platforms.map((p) => (
           <div key={p.id} className="flex flex-col bg-card p-4">
             <div className="flex items-center gap-3">
@@ -307,7 +307,7 @@ export function CustomConnectors({ canManage }: { canManage: boolean }) {
             setOpenKey((k) => k + 1);
             setOpen("webhook");
           }}
-          className="group flex gap-4 rounded-md border bg-card p-5 text-left transition-colors hover:border-foreground/40 disabled:opacity-60"
+          className="group flex gap-4 rounded-xl border bg-card p-5 text-left transition-colors hover:border-foreground/40 disabled:opacity-60"
         >
           <WebhookIcon className="size-6 shrink-0 text-muted-foreground group-hover:text-signal" strokeWidth={1.6} />
           <div>
@@ -324,7 +324,7 @@ export function CustomConnectors({ canManage }: { canManage: boolean }) {
             setOpenKey((k) => k + 1);
             setOpen("manual");
           }}
-          className="group flex gap-4 rounded-md border bg-card p-5 text-left transition-colors hover:border-foreground/40 disabled:opacity-60"
+          className="group flex gap-4 rounded-xl border bg-card p-5 text-left transition-colors hover:border-foreground/40 disabled:opacity-60"
         >
           <HandIcon className="size-6 shrink-0 text-muted-foreground group-hover:text-signal" strokeWidth={1.6} />
           <div>
@@ -354,7 +354,7 @@ function WebhookDialog({ open, onClose }: { open: boolean; onClose: () => void }
               <DialogTitle>Webhook added</DialogTitle>
               <DialogDescription>Copy the signing secret now; it won&apos;t be shown again. Every request carries an X-Relay-Signature header: an HMAC-SHA256 of the body with this secret.</DialogDescription>
             </DialogHeader>
-            <div className="flex items-center gap-2 rounded-md border bg-muted p-2 font-mono text-xs">
+            <div className="flex items-center gap-2 rounded-xl border bg-muted p-2 font-mono text-xs">
               <span className="flex-1 truncate">{secret}</span>
               <Button size="icon-sm" variant="ghost" onClick={() => navigator.clipboard.writeText(secret).then(() => toast.success("Copied"))}>
                 <CopyIcon />

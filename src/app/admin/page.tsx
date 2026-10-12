@@ -56,7 +56,7 @@ export default async function AdminHome() {
           <SectionTitle n="01" aside={<span className="font-mono text-[11px] text-muted-foreground">30 days · UTC</span>}>
             Delivery volume
           </SectionTitle>
-          <div className="rounded-md border bg-card p-4">
+          <div className="rounded-xl border bg-card p-4">
             <PublishVolumeChart data={o.daily} />
           </div>
         </section>
@@ -64,10 +64,10 @@ export default async function AdminHome() {
           <SectionTitle n="02" aside={<span className="font-mono text-[11px] text-muted-foreground">{signups30} in 30 days</span>}>
             Sign-ups
           </SectionTitle>
-          <div className="rounded-md border bg-card p-4">
+          <div className="rounded-xl border bg-card p-4">
             <SignupSpark data={o.users.signups} />
           </div>
-          <div className="mt-4 grid grid-cols-4 gap-px overflow-hidden rounded-md border bg-border">
+          <div className="mt-4 grid grid-cols-4 gap-px overflow-hidden rounded-xl border bg-border">
             {["free", "creator", "studio", "agency"].map((plan) => {
               const n = o.plans.find((p) => p._id === plan)?.n ?? 0;
               return (
@@ -119,7 +119,7 @@ export default async function AdminHome() {
         </section>
         <section>
           <SectionTitle n="04">Top error codes</SectionTitle>
-          <ul className="divide-y rounded-md border bg-card">
+          <ul className="divide-y rounded-xl border bg-card">
             {o.errors.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">No errors recorded.</li>}
             {o.errors.map((e) => (
               <li key={e._id} className="flex items-center gap-3 px-4 py-2.5">
@@ -136,7 +136,7 @@ export default async function AdminHome() {
         </section>
         <section>
           <SectionTitle n="05">Busiest workspaces</SectionTitle>
-          <ol className="divide-y rounded-md border bg-card">
+          <ol className="divide-y rounded-xl border bg-card">
             {o.topWorkspaces.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">Nothing published yet.</li>}
             {o.topWorkspaces.map((w, i) => (
               <li key={String(w._id)} className="flex items-center gap-3 px-4 py-2.5">

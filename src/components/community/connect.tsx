@@ -35,7 +35,7 @@ export function CommunityConnectGrid({
   const [key, setKey] = useState(0);
   return (
     <>
-      <div className={cn("grid gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-2 xl:grid-cols-3", className)}>
+      <div className={cn("grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 xl:grid-cols-3", className)}>
         {tiles.map((t) => {
           const spec = PLATFORMS[t.id];
           return (
@@ -178,7 +178,7 @@ function ConnectCommunityDialog({ platform, demo, onClose }: { platform: Communi
             {spec.id === "whatsapp" && (
               <div className="grid gap-2">
                 <Label>Kind</Label>
-                <select name="accountType" className="h-9 rounded-md border bg-transparent px-3 text-sm" defaultValue="group">
+                <select name="accountType" className="h-9 rounded-xl border bg-transparent px-3 text-sm" defaultValue="group">
                   <option value="group">Group (Cloud API)</option>
                   <option value="channel">Channel or Community (assisted)</option>
                 </select>

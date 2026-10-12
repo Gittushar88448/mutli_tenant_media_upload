@@ -50,7 +50,7 @@ export function CommunityTabs({ connected, canManage }: { connected: Record<stri
           const spec = PLATFORMS[id];
           return (
             <TabsContent key={id} value={id} className="mt-2">
-              <div className="grid gap-6 rounded-md border bg-card p-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="grid gap-6 rounded-xl border bg-card p-5 lg:grid-cols-[minmax(0,1fr)_260px]">
                 <div className="min-w-0">
                   <p className="text-sm leading-relaxed text-muted-foreground">{g.intro}</p>
                   {g.alt && <p className="mt-4 eyebrow">Cloud API (automatic)</p>}
@@ -106,7 +106,7 @@ function Steps({ steps }: { steps: GuideStep[] }) {
           <span className="mt-0.5 flex size-5 items-center justify-center rounded-full border font-mono text-[10.5px] text-muted-foreground">{i + 1}</span>
           <div>
             {s.text}
-            {s.code && <code className="mt-1.5 block w-fit rounded-[3px] border bg-muted/50 px-2 py-0.5 font-mono text-[12px] text-muted-foreground">{s.code}</code>}
+            {s.code && <code className="mt-1.5 block w-fit rounded-[6px] border bg-muted/50 px-2 py-0.5 font-mono text-[12px] text-muted-foreground">{s.code}</code>}
           </div>
         </li>
       ))}

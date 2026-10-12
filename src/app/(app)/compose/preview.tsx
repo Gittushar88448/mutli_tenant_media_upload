@@ -50,7 +50,7 @@ export function Preview({
           <MessageCircleIcon />
           <SendIcon />
         </div>
-        <span className="absolute top-3 left-3 rounded-[3px] bg-white/15 px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-wider backdrop-blur">
+        <span className="absolute top-3 left-3 rounded-[6px] bg-white/15 px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-wider backdrop-blur">
           {spec.postTypes.find((p) => p.id === postType)?.label}
         </span>
       </div>
@@ -164,7 +164,7 @@ function ChatPreview({
             <p className="text-[13px] font-semibold">{poll?.question || "Poll question"}</p>
             <p className="font-mono text-[9.5px] text-muted-foreground uppercase">Poll</p>
             {(poll?.options.filter((o) => o.trim()).length ? poll.options.filter((o) => o.trim()) : ["Answer A", "Answer B"]).map((o) => (
-              <div key={o} className="flex items-center gap-2 rounded-md border px-2 py-1 text-[12.5px]">
+              <div key={o} className="flex items-center gap-2 rounded-xl border px-2 py-1 text-[12.5px]">
                 <span className="size-3 rounded-full border" /> {o}
               </div>
             ))}

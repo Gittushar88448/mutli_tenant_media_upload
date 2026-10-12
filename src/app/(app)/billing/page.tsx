@@ -57,7 +57,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           {usage.usage.map((u) => {
             const pct = Math.min(100, Math.round((u.used / Math.max(u.limit, 1)) * 100));
             return (
-              <div key={u.label} className="rounded-md border bg-card p-4">
+              <div key={u.label} className="rounded-xl border bg-card p-4">
                 <p className="eyebrow">{u.label}</p>
                 <p className="mt-2 font-serif text-4xl tabular-nums">
                   {u.used.toLocaleString()} <span className="text-lg text-muted-foreground">/ {u.limit.toLocaleString()}</span>
@@ -85,7 +85,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
       <section>
         <SectionTitle n="03">What your plan unlocks</SectionTitle>
-        <ul className="grid gap-px overflow-hidden rounded-md border bg-border md:grid-cols-2">
+        <ul className="grid gap-px overflow-hidden rounded-xl border bg-border md:grid-cols-2">
           {(Object.keys(FEATURE_LABELS) as Feature[]).map((f) => (
             <li key={f} className={`flex gap-3 bg-card p-4 ${highlight === f ? "ring-2 ring-signal ring-inset" : ""}`}>
               <span className={`mt-1 size-2 shrink-0 rounded-full ${features[f] ? "bg-ok" : "bg-muted-foreground/30"}`} />

@@ -44,7 +44,7 @@ export default async function AdminSettings() {
         <SectionTitle n="03" aside={<span className="font-mono text-[11px] text-muted-foreground">{demoMode() ? "demo mode on" : "demo mode off"} · n8n {n8nConfigured() ? "connected" : "not configured"}</span>}>
           Environment
         </SectionTitle>
-        <div className="overflow-hidden rounded-md border bg-card">
+        <div className="overflow-hidden rounded-xl border bg-card">
           {env.map((e) => (
             <div key={e.key} className="flex items-center gap-3 border-b px-4 py-2.5 last:border-0">
               <span className={`size-2 rounded-full ${e.ok ? "bg-ok" : "bg-signal"}`} />

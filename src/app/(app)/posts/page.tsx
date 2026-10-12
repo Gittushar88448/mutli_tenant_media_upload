@@ -66,12 +66,12 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
       </div>
 
       {posts.length === 0 ? (
-        <div className="grain rounded-md border border-dashed p-14 text-center">
+        <div className="grain rounded-xl border border-dashed p-14 text-center">
           <p className="font-serif text-2xl">Nothing in {TABS.find((t) => t.id === tab)!.label.toLowerCase()}.</p>
           <p className="mt-1 text-sm text-muted-foreground">Posts you create show up here with each channel&apos;s delivery state.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-md border bg-card">
+        <div className="overflow-hidden rounded-xl border bg-card">
           {posts.map((p) => (
             <Link key={String(p._id)} href={`/posts/${String(p._id)}`} className="grid grid-cols-[56px_1fr] gap-4 border-b px-4 py-3.5 last:border-0 hover:bg-accent/30 md:grid-cols-[56px_1fr_220px_150px_130px]">
               {p.coverId ? (
