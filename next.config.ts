@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Every screen here is per-user and per-workspace, so pages render on request.
+  cacheComponents: false,
+  serverExternalPackages: ["mongoose"],
   experimental: {
-    agentFeedback: true,
+    serverActions: { bodySizeLimit: "10mb" },
   },
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {

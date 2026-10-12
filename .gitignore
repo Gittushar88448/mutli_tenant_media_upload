@@ -17,6 +17,12 @@
 /.next/
 /out/
 
+# n8n
+/n8n/
+
+#scripts
+/scripts/
+
 # production
 /build
 
@@ -39,3 +45,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# uploads (local storage driver)
+/storage
+!.env.example
+/n8n/workflows-cloud
