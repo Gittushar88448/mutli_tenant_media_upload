@@ -4,7 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Trash2Icon } from "lucide-react";
+import { DownloadIcon, Trash2Icon, WandSparklesIcon } from "lucide-react";
+import Link from "next/link";
 import { MediaUploader } from "@/components/media/uploader";
 import { MediaThumb } from "@/components/media/thumb";
 import type { MediaItem } from "@/components/media/types";
@@ -15,12 +16,13 @@ import { deleteMediaAction } from "@/lib/actions/media";
 import { formatBytes, formatDuration } from "@/lib/utils";
 import { mediaUrl } from "@/components/media/types";
 
-type Item = MediaItem & { uses?: number };
+type Item = MediaItem & { uses?: number; edited?: boolean; license?: string };
 
-export function MediaLibrary({ initial }: { initial: Item[] }) {
+export function MediaLibrary({ initial, openId, canEdit }: { initial: Item[]; openId?: string; canEdit: boolean }) {
   const [items, setItems] = useState(initial);
   const [filter, setFilter] = useState("all");
-  const [open, setOpen] = useState<Item | null>(null);
+  // ?open=<id> opens a file's sheet, e.g. a copy just saved from the editor.
+  const [open, setOpen] = useState<Item | null>(() => initial.find((i) => i.id === openId) ?? null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -79,7 +81,9 @@ export function MediaLibrary({ initial }: { initial: Item[] }) {
             <>
               <SheetHeader>
                 <SheetTitle className="truncate pr-8">{open.filename}</SheetTitle>
-                <SheetDescription>Uploaded {format(new Date(open.createdAt), "d MMM yyyy, HH:mm")}</SheetDescription>
+                <SheetDescription>
+                  {open.edited ? "Saved from the editor" : "Uploaded"} {format(new Date(open.createdAt), "d MMM yyyy, HH:mm")}
+                </SheetDescription>
               </SheetHeader>
               <div className="px-5">
                 {open.kind === "video" ? (
@@ -110,9 +114,29 @@ export function MediaLibrary({ initial }: { initial: Item[] }) {
                   )}
                   <dt className="eyebrow">Used in</dt>
                   <dd className="font-mono text-xs">{open.uses ?? 0} posts</dd>
+                  {open.license && (
+                    <>
+                      <dt className="eyebrow">Licence</dt>
+                      <dd className="text-xs break-words text-muted-foreground">{open.license.split(" ").slice(1).join(" ")}</dd>
+                    </>
+                  )}
                 </dl>
               </div>
-              <div className="mt-auto border-t p-5">
+              <div className="mt-auto space-y-2 border-t p-5">
+                <div className="grid grid-cols-2 gap-2">
+                  {open.kind !== "audio" && canEdit ? (
+                    <Button asChild>
+                      <Link href={`/media/${open.id}/edit`}>
+                        <WandSparklesIcon /> Edit
+                      </Link>
+                    </Button>
+                  ) : null}
+                  <Button asChild variant="outline" className={open.kind === "audio" || !canEdit ? "col-span-2" : undefined}>
+                    <a href={`${mediaUrl(open.id)}?download=1`}>
+                      <DownloadIcon /> Download
+                    </a>
+                  </Button>
+                </div>
                 <Button
                   variant="outline"
                   className="w-full text-destructive"

@@ -204,8 +204,10 @@ export async function getPostDetail(workspaceId: string, postId: string) {
         foreignField: "postId",
         as: "targets",
         pipeline: [
-          { $lookup: { from: "socialaccounts", localField: "socialAccountId", foreignField: "_id", as: "account", pipeline: [{ $project: { handle: 1, displayName: 1, sandbox: 1 } }] } },
+          { $lookup: { from: "socialaccounts", localField: "socialAccountId", foreignField: "_id", as: "account", pipeline: [{ $project: { handle: 1, displayName: 1, sandbox: 1, profileUrl: 1, "connector.mode": 1, "connector.inviteUrl": 1 } }] } },
           { $unwind: "$account" },
+          { $lookup: { from: "mediaassets", localField: "renderedAssetId", foreignField: "_id", as: "rendered", pipeline: [{ $project: { width: 1, height: 1, durationMs: 1, sizeBytes: 1 } }] } },
+          { $addFields: { rendered: { $first: "$rendered" } } },
           {
             $lookup: {
               from: "publishattempts",

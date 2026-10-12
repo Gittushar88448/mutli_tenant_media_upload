@@ -1,14 +1,21 @@
 import "server-only";
+import { DIRECT_PLATFORMS } from "@/lib/platforms";
 import { claimDueTargets, recordTargetEvent } from "./engine";
+import { deliverDirect } from "./direct";
 
 /**
  * Development stand-in for the n8n workflows. It goes through exactly the same claim and
- * event code paths, so the UI behaves the way it will in production. Only sandbox
- * accounts "publish"; real accounts fail with a clear message telling you to run n8n.
+ * event code paths, so the UI behaves the way it will in production. Platforms with a
+ * built-in connector (communities, Reddit) really deliver, sandbox or not. Other real
+ * accounts fail with a clear message telling you to run n8n.
  */
 export async function runSimulatedDispatch(onlyIds?: string[]) {
   const claimed = await claimDueTargets({ workerId: "simulator", onlyIds, limit: 50 });
   for (const t of claimed) {
+    if ((DIRECT_PLATFORMS as string[]).includes(t.platform)) {
+      await deliverDirect(t.id, "sim");
+      continue;
+    }
     await recordTargetEvent(t.id, { step: "preparing", executionId: "sim" });
     await recordTargetEvent(t.id, { step: "uploading", executionId: "sim", platformContainerId: `sim_container_${t.id.slice(-6)}` });
     if (t.platform === "manual") {

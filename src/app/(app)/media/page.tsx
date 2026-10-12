@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getWorkspaceContext } from "@/lib/auth/session";
+import { can, getWorkspaceContext } from "@/lib/auth/session";
 import { MediaAsset, oid } from "@/lib/models";
 import { PageHeader } from "@/components/shell/page-header";
 import { MediaLibrary } from "./library";
@@ -7,11 +7,13 @@ import { formatBytes } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Media" };
 
-export default async function MediaPage() {
+export default async function MediaPage({ searchParams }: PageProps<"/media">) {
+  const sp = await searchParams;
   const ctx = await getWorkspaceContext();
   const [assets, usage] = await Promise.all([
     MediaAsset.aggregate([
-      { $match: { workspaceId: oid(ctx.workspace.id) } },
+      // Rendered per-channel cuts are hidden; they belong to their original.
+      { $match: { workspaceId: oid(ctx.workspace.id), variantOf: { $exists: false } } },
       { $sort: { createdAt: -1 } },
       { $limit: 500 },
       // How many posts use each file, so the library can show it and block deletes.
@@ -39,6 +41,8 @@ export default async function MediaPage() {
           mime: 1,
           createdAt: { $dateToString: { date: "$createdAt" } },
           uses: { $ifNull: [{ $first: "$uses.n" }, 0] },
+          edited: { $toBool: { $ifNull: ["$editOf", false] } },
+          license: "$audio.licenseRef",
         },
       },
     ]),
@@ -50,9 +54,9 @@ export default async function MediaPage() {
       <PageHeader
         eyebrow="Media"
         title="Library"
-        description={`${assets.length} files · ${formatBytes(total)}. Music has to be your own or licensed: it's mixed into the video before upload, because no platform's API offers its in-app music library.`}
+        description={`${assets.length} files · ${formatBytes(total)}. Open a photo or video to crop, rotate, trim, add a filter or a song, and save it as a new copy.`}
       />
-      <MediaLibrary initial={assets} />
+      <MediaLibrary initial={assets} openId={typeof sp.open === "string" ? sp.open : undefined} canEdit={can(ctx.role, "editor")} />
     </div>
   );
 }

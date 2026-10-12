@@ -35,6 +35,13 @@ const DAILY_CAP: Record<string, number> = {
   linkedin: 100,
   x: 100,
   pinterest: 100,
+  reddit: 50,
+  telegram: 1000,
+  whatsapp: 1000,
+  discord: 1000,
+  slack: 1000,
+  bluesky: 300,
+  mastodon: 300,
   webhook: 10_000,
   manual: 10_000,
 };

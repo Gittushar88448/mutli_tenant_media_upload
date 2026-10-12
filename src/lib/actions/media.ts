@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { connectDB } from "@/lib/db";
-import { MediaAsset, Post, oid, isOid } from "@/lib/models";
+import { MediaAsset, Post, PostTarget, oid, isOid } from "@/lib/models";
 import { can, getWorkspaceContext } from "@/lib/auth/session";
 import { deleteObject } from "@/lib/storage";
 import { audit } from "@/lib/audit";
@@ -20,7 +20,13 @@ export async function deleteMediaAction(id: string): Promise<{ error?: string }>
     $or: [{ "media.assetId": asset._id }, { "media.audioTrackId": asset._id }],
   });
   if (inUse) return { error: `Used by ${inUse} post${inUse > 1 ? "s" : ""} that haven't gone out yet.` };
-  await deleteObject(asset.storageKey);
+  const trackInUse = asset.kind === "audio" ? await PostTarget.countDocuments({ workspaceId: oid(ctx.workspace.id), "editSpec.audioTrackId": asset._id, status: { $in: ["scheduled", "retrying", "needs_action"] } }) : 0;
+  if (trackInUse) return { error: `A channel's own cut still uses this track in ${trackInUse} post${trackInUse > 1 ? "s" : ""}.` };
+  // Its rendered cuts go with it.
+  const variants = await MediaAsset.find({ variantOf: asset._id }, { storageKey: 1, storage: 1 }).lean();
+  await Promise.all(variants.map((v) => deleteObject(v)));
+  await MediaAsset.deleteMany({ variantOf: asset._id });
+  await deleteObject(asset);
   await asset.deleteOne();
   await audit({ action: "media.deleted", actor: ctx.user, workspaceId: ctx.workspace.id, entity: "media", entityId: id });
   revalidatePath("/media");

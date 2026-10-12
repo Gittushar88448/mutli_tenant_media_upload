@@ -44,6 +44,8 @@ type Row = {
   status: string;
   sandbox: boolean;
   endpoint?: string;
+  audienceSize?: number | null;
+  assisted?: boolean;
   expiresAt: string | null;
   published: number;
   queued: number;
@@ -81,8 +83,9 @@ export function ChannelList({ rows, canManage }: { rows: Row[]; canManage: boole
                   )}
                 </div>
                 <p className="truncate text-xs text-muted-foreground">
-                  {PLATFORMS[r.platform as TargetPlatform]?.name} · {r.accountType ?? "account"}
+                  {PLATFORMS[r.platform as TargetPlatform]?.name} · {r.assisted ? "assisted" : (r.accountType ?? "account")}
                   {r.endpoint && ` · ${new URL(r.endpoint).host}`}
+                  {r.audienceSize ? ` · ${r.audienceSize.toLocaleString()} members` : ""}
                 </p>
               </div>
               <div className="hidden md:block">

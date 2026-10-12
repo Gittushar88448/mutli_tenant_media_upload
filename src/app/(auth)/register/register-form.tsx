@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function RegisterForm() {
+export function RegisterForm({ compact }: { compact?: boolean }) {
   const [state, action, pending] = useActionState(registerAction, undefined);
   // Browser timezone, read without an effect; the server render falls back to UTC.
   const tz = useSyncExternalStore(
@@ -18,7 +18,7 @@ export function RegisterForm() {
   const err = (k: string) => state?.fieldErrors?.[k]?.[0];
 
   return (
-    <form action={action} className="mt-8 grid gap-5">
+    <form action={action} className={compact ? "grid gap-5" : "mt-8 grid gap-5"}>
       <input type="hidden" name="timezone" value={tz} />
       <Field id="name" label="Your name" error={err("name")}>
         <Input id="name" name="name" autoComplete="name" required aria-invalid={!!err("name")} />

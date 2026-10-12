@@ -1,0 +1,1161 @@
+{
+  "name": "Relay \u00b7 Publish target",
+  "nodes": [
+    {
+      "id": "7bbe9673-3e47-55f0-afde-8426663ad7d8",
+      "name": "Target",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -480,
+        600
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "18c70346-3484-5b65-825d-d70e5d47dc33",
+      "name": "Built into Relay?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ [\"telegram\", \"whatsapp\", \"discord\", \"slack\", \"bluesky\", \"mastodon\", \"reddit\"].includes($json.platform) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c908eec1-d4af-54cb-a387-55c3dad6b9d3",
+      "name": "Relay sends it",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        360
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ executionId: $execution.id }) }}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "a84343f5-ed64-5952-ae00-21beeabb53fa",
+      "name": "Get credentials",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $json.id }}/credentials",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "17283098-dce3-5635-ad68-594ff423527c",
+      "name": "Get media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/media",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "18e78698-5c65-57aa-a98b-0eb327cad82c",
+      "name": "Report preparing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"preparing\", executionId: $execution.id }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "0b96ed50-2f98-5e2e-93b6-9e56b6dfa25d",
+      "name": "Route by platform",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        960,
+        600
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Get credentials').item.json.sandbox === true }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "sandbox"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Target').item.json.platform === 'instagram' }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "instagram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Target').item.json.platform === 'facebook' }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "facebook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Target').item.json.platform === 'webhook' }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "webhook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Target').item.json.platform === 'manual' }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "manual"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "not built yet"
+        }
+      }
+    },
+    {
+      "id": "3487b3e1-6c50-58cd-96da-42f8d02c8520",
+      "name": "Sandbox published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"published\", executionId: $execution.id, platformPostId: \"sandbox_\" + $execution.id, permalink: \"https://example.com/sandbox/\" + $execution.id }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "e8fcec2a-83ad-5601-a185-132cb1d71017",
+      "name": "IG container params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst t = $('Target').item.json;\nconst media = $('Get media').item.json.items;\nconst first = media[0];\nif (!first) throw new Error('NO_MEDIA');\nconst q = { caption: t.caption };\nif (t.postType === 'reel') { q.media_type = 'REELS'; q.video_url = first.url; q.share_to_feed = String(t.options.shareToFeed ?? true); if (t.options.audioName) q.audio_name = t.options.audioName; }\nelse if (t.postType === 'story') { q.media_type = 'STORIES'; first.kind === 'video' ? q.video_url = first.url : q.image_url = first.url; }\nelse if (first.kind === 'video') { q.media_type = 'REELS'; q.video_url = first.url; q.share_to_feed = 'true'; }\nelse { q.image_url = first.url; }\nreturn [{ json: { igUserId: t.account.externalId, resumeContainer: t.resume?.platformContainerId || null, query: q } }];\n"
+      }
+    },
+    {
+      "id": "4e550a4d-c9ad-5400-89b9-1e482bdb9b46",
+      "name": "IG create container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/{{ $json.igUserId }}/media",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $('Get credentials').item.json.accessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.query) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "ec648f4d-b401-5087-b0b9-65a5a1b5cbb2",
+      "name": "Report processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"processing\", executionId: $execution.id, platformContainerId: $('IG create container').item.json.id }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "9860368c-b4e3-5309-8983-b85d8a407dae",
+      "name": "Wait 15s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        300
+      ],
+      "parameters": {
+        "amount": 15
+      },
+      "webhookId": "f7c42c01-f365-4a8c-8b82-e9de3b9ebfed"
+    },
+    {
+      "id": "93b6726a-7fd2-5366-b4b2-0d1b50198bd8",
+      "name": "IG container status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://graph.facebook.com/v21.0/{{ $('IG create container').item.json.id }}",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "status_code,status"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Get credentials').item.json.accessToken }}"
+            }
+          ]
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "153af7d4-9097-5bb7-9e02-13303f6d5c48",
+      "name": "Finished?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2400,
+        300
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status_code }}",
+                    "rightValue": "FINISHED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "finished"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status_code }}",
+                    "rightValue": "IN_PROGRESS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "in progress"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status_code }}",
+                    "rightValue": "ERROR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "error"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 1
+        }
+      }
+    },
+    {
+      "id": "193b083e-71e5-575b-884a-d78cecea1dce",
+      "name": "IG publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v21.0/{{ $('IG container params').item.json.igUserId }}/media_publish",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('IG create container').item.json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Get credentials').item.json.accessToken }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a7cb7f37-5539-5864-881d-b9425218ea3c",
+      "name": "IG permalink",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        200
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://graph.facebook.com/v21.0/{{ $json.id }}",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "permalink"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Get credentials').item.json.accessToken }}"
+            }
+          ]
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "b73e4a20-b8f4-56ed-a84c-0c1af62d5c22",
+      "name": "IG report published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"published\", executionId: $execution.id, platformPostId: $json.id, permalink: $json.permalink }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "9dd0feb1-211f-57be-9bda-7c2434c0e763",
+      "name": "IG report rejected",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"failed\", executionId: $execution.id, errorCode: \"IG_CONTAINER_ERROR\", message: $json.status, retryable: false }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "dac50989-538f-5c70-8eb7-a4b681559df9",
+      "name": "FB request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        620
+      ],
+      "parameters": {
+        "jsCode": "\nconst t = $('Target').item.json;\nconst first = $('Get media').item.json.items[0];\nconst page = t.account.externalId;\nif (t.postType === 'text' || !first) return [{ json: { url: `https://graph.facebook.com/v21.0/${page}/feed`, body: { message: t.caption, link: t.options.link || undefined } } }];\nif (first.kind === 'video') return [{ json: { url: `https://graph-video.facebook.com/v21.0/${page}/videos`, body: { file_url: first.url, description: t.caption } } }];\nreturn [{ json: { url: `https://graph.facebook.com/v21.0/${page}/photos`, body: { url: first.url, caption: t.caption } } }];\n"
+      }
+    },
+    {
+      "id": "4fc35047-09bd-5512-8b7b-23e8914bdcbd",
+      "name": "FB publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        620
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $('Get credentials').item.json.accessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}"
+      }
+    },
+    {
+      "id": "1ef4f1b7-d1fc-5959-96eb-20065c0e8ebd",
+      "name": "FB report published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        620
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"published\", executionId: $execution.id, platformPostId: $json.post_id || $json.id, permalink: \"https://facebook.com/\" + ($json.post_id || $json.id) }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "f38a0588-be4e-51ce-8a13-1701dd411b15",
+      "name": "Webhook payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        860
+      ],
+      "parameters": {
+        "jsCode": "\nconst crypto = require('crypto');\nconst t = $('Target').item.json;\nconst c = $('Get credentials').item.json;\nconst body = JSON.stringify({ event: 'post.publish', targetId: t.id, postId: t.postId, caption: t.caption, options: t.options, media: $('Get media').item.json.items, sentAt: new Date().toISOString() });\nconst sig = crypto.createHmac('sha256', c.signingSecret).update(body).digest('hex');\nconst headers = { 'content-type': 'application/json', 'x-relay-signature': sig };\nif (c.authHeader) headers['authorization'] = c.authHeader;\nreturn [{ json: { url: c.endpointUrl, body, headers } }];\n"
+      }
+    },
+    {
+      "id": "abd4ebde-10a3-55c8-bd90-d1d6be3af6e8",
+      "name": "Send webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        860
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={{ JSON.stringify($json.headers) }}",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 15000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "44e35f03-9495-5de9-8f0a-b4f033c46ce3",
+      "name": "Webhook report published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        860
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"published\", executionId: $execution.id, platformPostId: \"webhook_\" + $execution.id }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "3a4828c7-335c-537f-9c6f-a5735edb7b52",
+      "name": "Manual due",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        1080
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"needs_action\", executionId: $execution.id, errorCode: \"MANUAL_POST_DUE\", message: \"Time to post this one yourself, then mark it done.\" }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "043c658c-5b3a-5cce-9a02-29c04ce6a6e6",
+      "name": "Connector not built",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        1280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $('Target').item.json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ step: \"failed\", executionId: $execution.id, errorCode: \"CONNECTOR_NOT_BUILT\", message: \"The \" + $('Target').item.json.platform + \" workflow is not built in n8n yet.\", retryable: false }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "Target": {
+      "main": [
+        [
+          {
+            "node": "Built into Relay?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Built into Relay?": {
+      "main": [
+        [
+          {
+            "node": "Relay sends it",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get credentials": {
+      "main": [
+        [
+          {
+            "node": "Get media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get media": {
+      "main": [
+        [
+          {
+            "node": "Report preparing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report preparing": {
+      "main": [
+        [
+          {
+            "node": "Route by platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by platform": {
+      "main": [
+        [
+          {
+            "node": "Sandbox published",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IG container params",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FB request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Webhook payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Manual due",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Connector not built",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG container params": {
+      "main": [
+        [
+          {
+            "node": "IG create container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG create container": {
+      "main": [
+        [
+          {
+            "node": "Report processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report processing": {
+      "main": [
+        [
+          {
+            "node": "Wait 15s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 15s": {
+      "main": [
+        [
+          {
+            "node": "IG container status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG container status": {
+      "main": [
+        [
+          {
+            "node": "Finished?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finished?": {
+      "main": [
+        [
+          {
+            "node": "IG publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 15s",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IG report rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG publish": {
+      "main": [
+        [
+          {
+            "node": "IG permalink",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG permalink": {
+      "main": [
+        [
+          {
+            "node": "IG report published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FB request": {
+      "main": [
+        [
+          {
+            "node": "FB publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FB publish": {
+      "main": [
+        [
+          {
+            "node": "FB report published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook payload": {
+      "main": [
+        [
+          {
+            "node": "Send webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send webhook": {
+      "main": [
+        [
+          {
+            "node": "Webhook report published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false,
+  "pinData": {}
+}

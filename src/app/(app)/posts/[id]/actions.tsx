@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { CheckIcon, PencilIcon, RotateCcwIcon, XIcon, Trash2Icon } from "lucide-react";
+import { CheckIcon, CopyIcon, ExternalLinkIcon, PencilIcon, RotateCcwIcon, XIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -85,12 +85,40 @@ export function PostActions({ postId, status, canEdit, canApprove }: { postId: s
   );
 }
 
-export function TargetActions({ targetId, status, platform, canEdit }: { targetId: string; status: string; platform: string; canEdit: boolean }) {
+export function TargetActions({
+  targetId,
+  status,
+  platform,
+  canEdit,
+  assisted,
+}: {
+  targetId: string;
+  status: string;
+  platform: string;
+  canEdit: boolean;
+  /** WhatsApp Channels and Communities: the text to paste and where to paste it. */
+  assisted?: { text: string; openUrl: string | null };
+}) {
   const [pending, start] = useTransition();
   const [link, setLink] = useState("");
   if (!canEdit) return null;
-  if (platform === "manual" && status === "needs_action") {
+  if ((platform === "manual" || assisted) && status === "needs_action") {
     return (
+      <div className="flex items-center gap-2">
+      {assisted && (
+        <>
+          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(assisted.text).then(() => toast.success("Text copied"))}>
+            <CopyIcon /> Copy text
+          </Button>
+          {assisted.openUrl && (
+            <Button size="sm" variant="outline" asChild>
+              <a href={assisted.openUrl} target="_blank" rel="noreferrer">
+                <ExternalLinkIcon /> Open WhatsApp
+              </a>
+            </Button>
+          )}
+        </>
+      )}
       <Popover>
         <PopoverTrigger asChild>
           <Button size="sm" variant="signal">
@@ -105,6 +133,7 @@ export function TargetActions({ targetId, status, platform, canEdit }: { targetI
           </Button>
         </PopoverContent>
       </Popover>
+      </div>
     );
   }
   if (["failed", "needs_action"].includes(status)) {

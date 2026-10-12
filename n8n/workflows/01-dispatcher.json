@@ -1,0 +1,135 @@
+{
+  "name": "Relay \u00b7 Dispatcher",
+  "nodes": [
+    {
+      "id": "679f8a29-a252-529c-9b05-c42a343f56b7",
+      "name": "Every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ce83c970-dfdb-5a9e-abd5-b03b5b0c9881",
+      "name": "Claim due targets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/claim",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ limit: 25, workerId: \"n8n-\" + $execution.id }) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "88ed8614-8385-5161-8524-0452a29009fd",
+      "name": "One item per target",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "fieldToSplitOut": "targets",
+        "options": {}
+      }
+    },
+    {
+      "id": "37c33f8a-e90a-5f1c-99f3-563afba74481",
+      "name": "Publish target",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_PUBLISH_TARGET_WORKFLOW_ID"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every minute": {
+      "main": [
+        [
+          {
+            "node": "Claim due targets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim due targets": {
+      "main": [
+        [
+          {
+            "node": "One item per target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per target": {
+      "main": [
+        [
+          {
+            "node": "Publish target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false,
+  "pinData": {}
+}

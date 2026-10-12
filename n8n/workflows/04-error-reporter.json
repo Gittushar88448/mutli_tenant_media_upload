@@ -1,0 +1,92 @@
+{
+  "name": "Relay \u00b7 Error reporter",
+  "nodes": [
+    {
+      "id": "193229e8-97ba-590e-92e3-cac81aae6441",
+      "name": "On workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "b4e68d90-f0a5-544f-9749-d4e7fcbff5b6",
+      "name": "Find target",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\n// Pull the target id out of the failed execution's first node data when possible.\nconst ex = $json.execution || {};\nconst data = ex.data?.resultData?.runData?.Target?.[0]?.data?.main?.[0]?.[0]?.json;\nconst msg = ex.error?.message || 'Workflow failed';\nconst http = ex.error?.httpCode ? Number(ex.error.httpCode) : undefined;\nconst auth = http === 401 || http === 403 || /OAuth|access token|permission/i.test(msg);\nconst retryable = !auth && (!http || http === 429 || http >= 500);\nreturn data?.id ? [{ json: { id: data.id, event: { step: 'failed', executionId: String(ex.id || ''), errorCode: http ? 'HTTP_' + http : 'N8N_ERROR', httpStatus: http, message: msg.slice(0, 500), retryable, authError: auth } } }] : [];\n"
+      }
+    },
+    {
+      "id": "2f162e3f-4e13-5f51-b8b6-e22ee804de85",
+      "name": "Report failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.RELAY_APP_URL}}/api/internal/targets/{{ $json.id }}/events",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-relay-secret",
+              "value": "={{$env.RELAY_SHARED_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.event) }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "On workflow error": {
+      "main": [
+        [
+          {
+            "node": "Find target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find target": {
+      "main": [
+        [
+          {
+            "node": "Report failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false,
+  "pinData": {}
+}

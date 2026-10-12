@@ -75,6 +75,11 @@ export function UsersTable({ rows, total, page, size }: { rows: AdminUserRow[]; 
             <span className="flex items-center gap-1.5 font-medium">
               {row.original.name}
               {row.original.role === "admin" && <ShieldIcon className="size-3.5 text-signal" />}
+              {row.original.google && (
+                <span title="Signs in with Google" className="rounded-[3px] border px-1 font-mono text-[9.5px] leading-4 text-muted-foreground">
+                  G
+                </span>
+              )}
             </span>
             <span className="block text-xs text-muted-foreground">{row.original.email}</span>
           </span>

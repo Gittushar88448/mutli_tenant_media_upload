@@ -14,17 +14,25 @@ import {
   FlaskConicalIcon,
   ImagePlusIcon,
   Loader2Icon,
+  LockIcon,
   MusicIcon,
+  PlusIcon,
+  ScissorsIcon,
+  UsersIcon,
+  VoteIcon,
   SendIcon,
   XIcon,
   ZapIcon,
 } from "lucide-react";
-import { PLATFORMS, countHashtags, type TargetPlatform } from "@/lib/platforms";
+import { PLATFORMS, POLL_DURATIONS, countHashtags, type TargetPlatform } from "@/lib/platforms";
+import { PLAN_INFO, planFor, type Feature } from "@/lib/plans";
+import { UpgradeHint } from "@/components/upgrade-hint";
 import { validateTargets } from "@/lib/publishing/validate";
 import { savePostAction, type ComposePayload } from "@/lib/actions/posts";
 import { PlatformIcon } from "@/components/platform-icon";
 import { MediaThumb } from "@/components/media/thumb";
 import { MediaUploader } from "@/components/media/uploader";
+import { MusicPicker } from "@/components/media/music-picker";
 import type { MediaItem } from "@/components/media/types";
 import { SectionTitle } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
@@ -43,9 +51,12 @@ import { cn } from "@/lib/utils";
 import { isPast } from "@/lib/time";
 import { Preview } from "./preview";
 
-type Account = { id: string; platform: string; handle: string; displayName?: string; sandbox: boolean; status: string };
-type TargetState = { postType: string; captionOverride: string; options: Record<string, unknown> };
+type Account = { id: string; platform: string; handle: string; displayName?: string; sandbox: boolean; status: string; category: string; audienceSize?: number };
+type EditSpec = { crop?: string; trimStartMs?: number; trimEndMs?: number; audioTrackId?: string; audioVolume?: number; keepOriginalAudio?: boolean };
+/** editSpec undefined means "same cut as the post". */
+type TargetState = { postType: string; captionOverride: string; options: Record<string, unknown>; editSpec?: EditSpec };
 type MediaSel = { assetId: string; audioTrackId?: string; editSpec: Record<string, unknown> };
+export type Poll = { question: string; options: string[]; allowMultiple: boolean; durationHours: number };
 
 export type ComposerInitial = {
   postId?: string;
@@ -53,13 +64,19 @@ export type ComposerInitial = {
   caption: string;
   scheduledAt?: string;
   media: MediaSel[];
-  targets: { accountId: string; postType: string; captionOverride: string; options: Record<string, unknown> }[];
+  targets: { accountId: string; postType: string; captionOverride: string; options: Record<string, unknown>; editSpec?: EditSpec }[];
+  poll?: Poll;
 };
 
-function defaultTarget(platform: string, hasVideo: boolean): TargetState {
+function defaultTarget(platform: string, hasVideo: boolean, mediaCount: number): TargetState {
   const spec = PLATFORMS[platform as TargetPlatform];
   const types = spec.postTypes;
-  const pick = (hasVideo && types.find((t) => t.media === "video")) || types.find((t) => t.media === "any") || types[0]!;
+  let pick = (hasVideo && types.find((t) => t.media === "video")) || types.find((t) => t.media === "any") || types[0]!;
+  if (spec.category === "community" || platform === "reddit") {
+    // Messages by default; attach media when the post has some.
+    const withMedia = mediaCount > 1 ? (types.find((t) => t.id === "album") ?? types.find((t) => t.id === "media")) : types.find((t) => t.id === "media");
+    pick = (mediaCount > 0 && withMedia) || types[0]!;
+  }
   const options: Record<string, unknown> = {};
   for (const f of spec.options) {
     if (f.type === "select" && !f.noDefault) options[f.key] = f.options[0]!.value;
@@ -74,12 +91,14 @@ export function Composer({
   timezone,
   needsApproval,
   initial,
+  features,
 }: {
   accounts: Account[];
   library: MediaItem[];
   timezone: string;
   needsApproval: boolean;
   initial?: ComposerInitial;
+  features: Record<Feature, boolean>;
 }) {
   const router = useRouter();
   const [library, setLibrary] = useState(initialLibrary);
@@ -87,14 +106,16 @@ export function Composer({
   const [caption, setCaption] = useState(initial?.caption ?? "");
   const [media, setMedia] = useState<MediaSel[]>(initial?.media ?? []);
   const [targets, setTargets] = useState<Record<string, TargetState>>(() =>
-    Object.fromEntries((initial?.targets ?? []).map((t) => [t.accountId, { postType: t.postType, captionOverride: t.captionOverride, options: t.options }]))
+    Object.fromEntries((initial?.targets ?? []).map((t) => [t.accountId, { postType: t.postType, captionOverride: t.captionOverride, options: t.options, editSpec: t.editSpec }]))
   );
+  const [poll, setPoll] = useState<Poll>(initial?.poll ?? { question: "", options: ["", ""], allowMultiple: false, durationHours: 24 });
   const [active, setActive] = useState<string | undefined>(initial?.targets[0]?.accountId);
   const [when, setWhen] = useState<"now" | "later">(initial?.scheduledAt ? "later" : "now");
   const initialLocal = initial?.scheduledAt ? new Date(initial.scheduledAt) : addDays(new Date(), 1);
   const [date, setDate] = useState<Date>(initialLocal);
   const [time, setTime] = useState(initial?.scheduledAt ? formatInTimeZone(initialLocal, timezone, "HH:mm") : "09:00");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [musicOpen, setMusicOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
   const [pending, start] = useTransition();
@@ -106,10 +127,12 @@ export function Composer({
   const selectedAccounts = accounts.filter((a) => targets[a.id]);
   const activeAccount = selectedAccounts.find((a) => a.id === active) ?? selectedAccounts[0];
 
+  const usesPoll = selectedAccounts.some((a) => targets[a.id]?.postType === "poll");
   const validation = validateTargets({
     caption,
     media: mediaItems.map((m) => ({ kind: m.kind, durationMs: m.durationMs, width: m.width, height: m.height })),
-    targets: selectedAccounts.map((a) => ({ key: a.id, platform: a.platform as TargetPlatform, ...targets[a.id]! })),
+    targets: selectedAccounts.map((a) => ({ key: a.id, platform: a.platform as TargetPlatform, ...targets[a.id]!, editSpec: targets[a.id]!.editSpec ?? (media[0]?.editSpec as EditSpec) })),
+    poll,
   });
   const errors = { ...validation.errors, ...serverErrors };
 
@@ -128,7 +151,7 @@ export function Composer({
     setTargets((t) => {
       const next = { ...t };
       if (next[a.id]) delete next[a.id];
-      else next[a.id] = defaultTarget(a.platform, hasVideo);
+      else next[a.id] = defaultTarget(a.platform, hasVideo, mediaItems.filter((m) => m.kind !== "audio").length);
       return next;
     });
     if (!targets[a.id]) setActive(a.id);
@@ -152,7 +175,9 @@ export function Composer({
         postType: targets[a.id]!.postType,
         captionOverride: targets[a.id]!.captionOverride || undefined,
         options: targets[a.id]!.options,
+        editSpec: targets[a.id]!.editSpec as ComposePayload["targets"][number]["editSpec"],
       })),
+      poll: usesPoll ? { ...poll, options: poll.options.map((o) => o.trim()).filter(Boolean) } : undefined,
     };
   }
 
@@ -160,7 +185,8 @@ export function Composer({
     start(async () => {
       const r = await savePostAction(payload(mode));
       if (!r.ok) {
-        toast.error(r.error);
+        if (r.upgrade) toast.error(r.error, { action: { label: "See plans", onClick: () => router.push("/billing") } });
+        else toast.error(r.error);
         if (r.targetErrors) setServerErrors(r.targetErrors);
         setConfirmOpen(false);
         return;
@@ -192,8 +218,18 @@ export function Composer({
           <SectionTitle n="01" aside={<span className="font-mono text-[11px] text-muted-foreground">{selectedAccounts.length} selected</span>}>
             Channels
           </SectionTitle>
+          {[
+            { key: "social", label: "Social feeds", list: accounts.filter((a) => a.category !== "community") },
+            { key: "community", label: "Communities & messaging", list: accounts.filter((a) => a.category === "community") },
+          ]
+            .filter((g) => g.list.length)
+            .map((g) => (
+          <div key={g.key} className="mb-4 last:mb-0">
+          <p className="mb-2 flex items-center gap-1.5 font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
+            {g.key === "community" && <UsersIcon className="size-3" />} {g.label}
+          </p>
           <div className="flex flex-wrap gap-2">
-            {accounts.map((a) => {
+            {g.list.map((a) => {
               const on = !!targets[a.id];
               const bad = a.status !== "active";
               return (
@@ -211,6 +247,7 @@ export function Composer({
                 >
                   <PlatformIcon platform={a.platform} tone="chip" className="size-6 rounded-full p-1" />
                   <span className="max-w-[160px] truncate">{a.handle}</span>
+                  {a.audienceSize ? <span className="font-mono text-[10px] opacity-60">{compact(a.audienceSize)}</span> : null}
                   {a.sandbox && <FlaskConicalIcon className="size-3 opacity-60" />}
                   {on ? <CheckIcon className="size-3.5 text-signal" /> : null}
                   {errors[a.id] && <span className="size-1.5 rounded-full bg-signal" />}
@@ -218,6 +255,8 @@ export function Composer({
               );
             })}
           </div>
+          </div>
+            ))}
         </section>
 
         {/* 02 Media */}
@@ -267,6 +306,12 @@ export function Composer({
               </div>
               {hasVideo && (
                 <div className="grid gap-4 rounded-md border bg-card p-4 md:grid-cols-[1.4fr_1fr_1fr]">
+                  <TrimFields
+                    className="md:col-span-3"
+                    durationMs={mediaItems.find((m) => m.kind === "video")?.durationMs}
+                    spec={(media[0]?.editSpec ?? {}) as EditSpec}
+                    onChange={(patch) => setMedia((x) => x.map((m, i) => (i === 0 ? { ...m, editSpec: { ...m.editSpec, ...patch } } : m)))}
+                  />
                   <div className="grid gap-2">
                     <Label className="flex items-center gap-1.5">
                       <MusicIcon className="size-3.5" /> Soundtrack
@@ -287,7 +332,11 @@ export function Composer({
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-[11.5px] text-muted-foreground">Your own or licensed tracks, mixed in before upload.{audioTracks.length === 0 && " Upload an MP3 or M4A to the library to use one."}</p>
+                    <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => setMusicOpen(true)}>
+                      <MusicIcon /> Browse music
+                      {!features.mediaStudio && <LockIcon className="size-3 text-muted-foreground" />}
+                    </Button>
+                    <p className="text-[11.5px] text-muted-foreground">Search the music library or use your own track. It&apos;s mixed in before upload.</p>
                   </div>
                   <div className="grid content-start gap-2">
                     <Label>Crop</Label>
@@ -336,7 +385,7 @@ export function Composer({
 
         {/* 03 Caption */}
         <section>
-          <SectionTitle n="03">Caption</SectionTitle>
+          <SectionTitle n="03">{selectedAccounts.length > 0 && selectedAccounts.every((a) => a.category === "community") ? "Message" : "Caption"}</SectionTitle>
           <Textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
@@ -360,6 +409,15 @@ export function Composer({
           </div>
         </section>
 
+        {usesPoll && (
+          <section>
+            <SectionTitle n="03b" aside={!features.polls ? <UpgradeHint feature="polls" compact /> : undefined}>
+              Poll
+            </SectionTitle>
+            <PollEditor poll={poll} onChange={setPoll} platforms={[...new Set(selectedAccounts.filter((a) => targets[a.id]?.postType === "poll").map((a) => a.platform))]} />
+          </section>
+        )}
+
         {/* 04 Per channel */}
         {selectedAccounts.length > 0 && (
           <section>
@@ -376,7 +434,17 @@ export function Composer({
               </TabsList>
               {selectedAccounts.map((a) => (
                 <TabsContent key={a.id} value={a.id} className="pt-3">
-                  <TargetEditor account={a} state={targets[a.id]!} errors={errors[a.id]} baseCaption={caption} onChange={(p) => patchTarget(a.id, p)} />
+                  <TargetEditor
+                    account={a}
+                    state={targets[a.id]!}
+                    errors={errors[a.id]}
+                    baseCaption={caption}
+                    onChange={(p) => patchTarget(a.id, p)}
+                    features={features}
+                    video={hasVideo ? mediaItems.find((m) => m.kind === "video") : undefined}
+                    audioTracks={audioTracks}
+                    postSpec={(media[0]?.editSpec ?? {}) as EditSpec}
+                  />
                 </TabsContent>
               ))}
             </Tabs>
@@ -393,7 +461,9 @@ export function Composer({
             postType={activeAccount ? targets[activeAccount.id]?.postType : undefined}
             caption={(activeAccount && targets[activeAccount.id]?.captionOverride) || caption}
             media={visual}
-            title={activeAccount ? (targets[activeAccount.id]?.options.title as string) : undefined}
+            title={activeAccount ? ((targets[activeAccount.id]?.options.title ?? targets[activeAccount.id]?.options.headline) as string) : undefined}
+            poll={activeAccount && targets[activeAccount.id]?.postType === "poll" ? poll : undefined}
+            audienceSize={activeAccount?.audienceSize}
           />
         </div>
 
@@ -446,6 +516,15 @@ export function Composer({
         </div>
       </aside>
 
+      <MusicPicker
+        open={musicOpen}
+        onOpenChange={setMusicOpen}
+        unlocked={features.mediaStudio}
+        onPicked={(item) => {
+          setLibrary((l) => (l.some((x) => x.id === item.id) ? l : [item, ...l]));
+          setMedia((x) => x.map((m, i) => (i === 0 ? { ...m, audioTrackId: item.id } : m)));
+        }}
+      />
       <MediaPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
@@ -485,6 +564,7 @@ export function Composer({
                   {a.sandbox && <Badge variant="outline">Sandbox</Badge>}
                   <Badge variant="secondary">{type?.label}</Badge>
                   {t.captionOverride && <Badge variant="outline">Own caption</Badge>}
+                  {t.editSpec && <Badge variant="outline">Own cut</Badge>}
                 </li>
               );
             })}
@@ -509,15 +589,27 @@ function TargetEditor({
   errors,
   baseCaption,
   onChange,
+  features,
+  video,
+  audioTracks,
+  postSpec,
 }: {
   account: Account;
   state: TargetState;
   errors?: string[];
   baseCaption: string;
   onChange: (p: Partial<TargetState>) => void;
+  features: Record<Feature, boolean>;
+  video?: MediaItem;
+  audioTracks: MediaItem[];
+  postSpec: EditSpec;
 }) {
   const spec = PLATFORMS[account.platform as TargetPlatform];
+  const type = spec.postTypes.find((t) => t.id === state.postType);
   const setOpt = (k: string, v: unknown) => onChange({ options: { ...state.options, [k]: v } });
+  const community = spec.category === "community";
+  const textLabel = community ? "Message" : account.platform === "youtube" ? "Description" : "Caption";
+  const max = type?.captionMax ?? spec.captionMax;
   return (
     <div className="grid gap-5 rounded-md border bg-card p-5">
       {errors && (
@@ -530,73 +622,268 @@ function TargetEditor({
         </ul>
       )}
       <div className="grid gap-2">
-        <Label>Post as</Label>
+        <Label>{community ? "Send as" : "Post as"}</Label>
         <ToggleGroup type="single" value={state.postType} onValueChange={(v) => v && onChange({ postType: v })} className="flex-wrap">
-          {spec.postTypes.map((t) => (
-            <ToggleGroupItem key={t.id} value={t.id}>
-              {t.label}
-            </ToggleGroupItem>
-          ))}
+          {spec.postTypes.map((t) => {
+            const lockedPoll = t.id === "poll" && !features.polls;
+            return (
+              <ToggleGroupItem key={t.id} value={t.id} disabled={lockedPoll} title={lockedPoll ? `Polls are on ${PLAN_INFO[planFor("polls")].name} and above` : undefined}>
+                {t.id === "poll" && <VoteIcon />}
+                {t.label}
+                {lockedPoll && <LockIcon className="size-3 opacity-60" />}
+              </ToggleGroupItem>
+            );
+          })}
         </ToggleGroup>
       </div>
       {spec.options.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {spec.options.map((f) => (
-            <div key={f.key} className={cn("grid gap-2", f.type === "switch" && "content-center")}>
-              {f.type === "text" && (
-                <>
-                  <Label>
-                    {f.label}
-                    {f.required && <span className="text-signal">*</span>}
-                  </Label>
-                  <Input value={(state.options[f.key] as string) ?? ""} onChange={(e) => setOpt(f.key, e.target.value)} placeholder={f.placeholder} maxLength={f.max} />
-                </>
-              )}
-              {f.type === "select" && (
-                <>
-                  <Label>
-                    {f.label}
-                    {f.required && <span className="text-signal">*</span>}
-                  </Label>
-                  <Select value={(state.options[f.key] as string) ?? ""} onValueChange={(v) => setOpt(f.key, v)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Choose…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {f.options.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </>
-              )}
-              {f.type === "switch" && (
-                <label className="flex items-start gap-3">
-                  <Switch checked={Boolean(state.options[f.key])} onCheckedChange={(v) => setOpt(f.key, v)} className="mt-0.5" />
-                  <span>
-                    <span className="block text-[13px] font-medium">{f.label}</span>
-                    {f.hint && <span className="block text-xs text-muted-foreground">{f.hint}</span>}
-                  </span>
-                </label>
-              )}
-            </div>
-          ))}
+          {spec.options.map((f) => {
+            const gated = f.key === "headline" && !features.channelCaptions;
+            return (
+              <div key={f.key} className={cn("grid gap-2", f.type === "switch" && "content-center")}>
+                {f.type === "text" && (
+                  <>
+                    <Label className="justify-between">
+                      <span>
+                        {f.label}
+                        {f.required && <span className="text-signal">*</span>}
+                      </span>
+                      {gated && <UpgradeHint feature="channelCaptions" compact />}
+                    </Label>
+                    <Input value={(state.options[f.key] as string) ?? ""} onChange={(e) => setOpt(f.key, e.target.value)} placeholder={f.placeholder} maxLength={f.max} disabled={gated} />
+                  </>
+                )}
+                {f.type === "select" && (
+                  <>
+                    <Label>
+                      {f.label}
+                      {f.required && <span className="text-signal">*</span>}
+                    </Label>
+                    <Select value={(state.options[f.key] as string) ?? ""} onValueChange={(v) => setOpt(f.key, v)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Choose…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {f.options.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+                {f.type === "switch" && (
+                  <label className="flex items-start gap-3">
+                    <Switch checked={Boolean(state.options[f.key])} onCheckedChange={(v) => setOpt(f.key, v)} className="mt-0.5" />
+                    <span>
+                      <span className="block text-[13px] font-medium">{f.label}</span>
+                      {f.hint && <span className="block text-xs text-muted-foreground">{f.hint}</span>}
+                    </span>
+                  </label>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between">
-          <Label>Caption for {spec.name}</Label>
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {(state.captionOverride || baseCaption).length}/{spec.captionMax.toLocaleString()}
+          <Label>
+            {textLabel} for {spec.name}
+          </Label>
+          <span className={cn("font-mono text-[11px]", (state.captionOverride || baseCaption).length > max ? "text-signal" : "text-muted-foreground")}>
+            {(state.captionOverride || baseCaption).length}/{max.toLocaleString()}
           </span>
         </div>
-        <Textarea value={state.captionOverride} onChange={(e) => onChange({ captionOverride: e.target.value })} placeholder="Leave empty to use the main caption" className="min-h-24" />
+        {features.channelCaptions ? (
+          <Textarea value={state.captionOverride} onChange={(e) => onChange({ captionOverride: e.target.value })} placeholder={`Leave empty to use the main ${community ? "message" : "caption"}`} className="min-h-24" />
+        ) : (
+          <>
+            <p className="rounded-md border bg-muted/30 px-3 py-2 text-[13px] whitespace-pre-wrap text-muted-foreground">{baseCaption || "Uses the main caption."}</p>
+            <UpgradeHint feature="channelCaptions" />
+          </>
+        )}
       </div>
+      {video && type && type.media !== "none" && type.media !== "image" && (
+        <ChannelCut state={state} onChange={onChange} video={video} audioTracks={audioTracks} postSpec={postSpec} unlocked={features.channelVideoEdits} platformName={spec.name} />
+      )}
       <p className="text-xs text-muted-foreground">{spec.notes}</p>
     </div>
   );
+}
+
+/** This channel's own cut of the first video: trim, crop and soundtrack, rendered with FFmpeg. */
+function ChannelCut({
+  state,
+  onChange,
+  video,
+  audioTracks,
+  postSpec,
+  unlocked,
+  platformName,
+}: {
+  state: TargetState;
+  onChange: (p: Partial<TargetState>) => void;
+  video: MediaItem;
+  audioTracks: MediaItem[];
+  postSpec: EditSpec;
+  unlocked: boolean;
+  platformName: string;
+}) {
+  const own = !!state.editSpec;
+  const spec = state.editSpec ?? postSpec;
+  const set = (patch: Partial<EditSpec>) => onChange({ editSpec: { ...spec, ...patch } });
+  return (
+    <div className="grid gap-4 rounded-md border border-dashed p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="flex items-center gap-1.5 text-[13px] font-medium">
+            <ScissorsIcon className="size-3.5" /> Video for {platformName}
+          </p>
+          <p className="text-xs text-muted-foreground">{own ? "Its own trim, crop and soundtrack, rendered before upload." : "Same cut as the post. Turn on to tailor it for this platform."}</p>
+        </div>
+        {unlocked ? <Switch checked={own} onCheckedChange={(v) => onChange({ editSpec: v ? { ...postSpec } : undefined })} aria-label="Own cut for this channel" /> : <UpgradeHint feature="channelVideoEdits" compact />}
+      </div>
+      {!unlocked && <UpgradeHint feature="channelVideoEdits" />}
+      {unlocked && own && (
+        <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
+          <TrimFields className="md:col-span-2" durationMs={video.durationMs} spec={spec} onChange={set} />
+          <div className="grid content-start gap-2">
+            <Label>Crop</Label>
+            <ToggleGroup type="single" value={spec.crop ?? "original"} onValueChange={(v) => v && set({ crop: v })} className="flex-wrap justify-start">
+              {["original", "9:16", "4:5", "1:1", "16:9"].map((c) => (
+                <ToggleGroupItem key={c} value={c} className="font-mono text-[11px]">
+                  {c === "original" ? "Orig" : c}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+          <div className="grid content-start gap-2">
+            <Label className="flex items-center gap-1.5">
+              <MusicIcon className="size-3.5" /> Soundtrack
+            </Label>
+            <Select value={spec.audioTrackId ?? "none"} onValueChange={(v) => set({ audioTrackId: v === "none" ? undefined : v })}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Video&apos;s own audio</SelectItem>
+                {audioTracks.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.filename}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {spec.audioTrackId && (
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={0}
+                  max={150}
+                  step={5}
+                  value={Math.round((spec.audioVolume ?? 1) * 100)}
+                  onChange={(e) => set({ audioVolume: Number(e.target.value) / 100 })}
+                  className="w-full accent-[var(--signal)]"
+                  aria-label="Track volume"
+                />
+                <span className="w-10 font-mono text-xs tabular-nums">{Math.round((spec.audioVolume ?? 1) * 100)}%</span>
+              </div>
+            )}
+            {spec.audioTrackId && (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Switch checked={spec.keepOriginalAudio ?? true} onCheckedChange={(v) => set({ keepOriginalAudio: v })} /> Keep original audio under it
+              </label>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TrimFields({ durationMs, spec, onChange, className }: { durationMs?: number; spec: EditSpec; onChange: (p: Partial<EditSpec>) => void; className?: string }) {
+  const total = durationMs ? durationMs / 1000 : undefined;
+  const start = (spec.trimStartMs ?? 0) / 1000;
+  const end = spec.trimEndMs ? spec.trimEndMs / 1000 : undefined;
+  const length = (end ?? total ?? 0) - start;
+  const toMs = (v: string) => (v === "" ? undefined : Math.max(0, Math.round(Number(v) * 1000)));
+  return (
+    <div className={cn("grid gap-2", className)}>
+      <Label className="flex items-center gap-1.5">
+        <ScissorsIcon className="size-3.5" /> Trim
+      </Label>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-muted-foreground">from</span>
+        <Input type="number" min={0} step={0.1} value={spec.trimStartMs ? start : ""} placeholder="0" onChange={(e) => onChange({ trimStartMs: toMs(e.target.value) })} className="h-8 w-20 font-mono" aria-label="Trim start in seconds" />
+        <span className="text-muted-foreground">to</span>
+        <Input type="number" min={0} step={0.1} value={end ?? ""} placeholder={total ? total.toFixed(1) : "end"} onChange={(e) => onChange({ trimEndMs: toMs(e.target.value) })} className="h-8 w-20 font-mono" aria-label="Trim end in seconds" />
+        <span className="text-muted-foreground">seconds</span>
+        {total !== undefined && <span className="ml-auto font-mono text-[11px] text-muted-foreground">{Math.max(0, length).toFixed(1)}s of {total.toFixed(1)}s</span>}
+      </div>
+    </div>
+  );
+}
+
+function PollEditor({ poll, onChange, platforms }: { poll: Poll; onChange: (p: Poll) => void; platforms: string[] }) {
+  const maxAnswers = platforms.includes("mastodon") ? 4 : 10;
+  const hasDuration = platforms.some((p) => p === "discord" || p === "mastodon");
+  return (
+    <div className="grid gap-4 rounded-md border bg-card p-5">
+      <div className="grid gap-2">
+        <Label htmlFor="poll-q">Question</Label>
+        <Input id="poll-q" value={poll.question} maxLength={300} onChange={(e) => onChange({ ...poll, question: e.target.value })} placeholder="What should we build next?" />
+      </div>
+      <div className="grid gap-2">
+        <Label>Answers</Label>
+        {poll.options.map((o, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="w-5 font-mono text-[11px] text-muted-foreground">{String.fromCharCode(65 + i)}</span>
+            <Input value={o} maxLength={100} onChange={(e) => onChange({ ...poll, options: poll.options.map((x, j) => (j === i ? e.target.value : x)) })} placeholder={`Answer ${i + 1}`} />
+            {poll.options.length > 2 && (
+              <Button variant="ghost" size="icon-sm" aria-label="Remove answer" onClick={() => onChange({ ...poll, options: poll.options.filter((_, j) => j !== i) })}>
+                <XIcon />
+              </Button>
+            )}
+          </div>
+        ))}
+        {poll.options.length < maxAnswers && (
+          <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => onChange({ ...poll, options: [...poll.options, ""] })}>
+            <PlusIcon /> Add answer
+          </Button>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-6">
+        <label className="flex items-center gap-2 text-[13px]">
+          <Switch checked={poll.allowMultiple} onCheckedChange={(v) => onChange({ ...poll, allowMultiple: v })} /> Allow several answers
+        </label>
+        {hasDuration && (
+          <div className="flex items-center gap-2 text-[13px]">
+            <span className="text-muted-foreground">Open for</span>
+            <Select value={String(poll.durationHours)} onValueChange={(v) => onChange({ ...poll, durationHours: Number(v) })}>
+              <SelectTrigger className="h-8 w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POLL_DURATIONS.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>
+                    {d.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">Telegram polls in channels are anonymous. The main message goes out with the poll.</p>
+    </div>
+  );
+}
+
+function compact(n: number) {
+  return n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}k` : String(n);
 }
 
 function Checklist({ validationOk, errors, accounts, hasMedia }: { validationOk: boolean; errors: Record<string, string[]>; accounts: Account[]; hasMedia: boolean }) {

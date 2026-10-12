@@ -128,7 +128,8 @@ export async function adminCreateUser(_: FormState, formData: FormData): Promise
 export async function adminSetWorkspacePlan(workspaceIds: string[], plan: string): Promise<Result> {
   const admin = await requireAdmin();
   if (!PLANS.includes(plan as never)) return { ok: false, message: "Unknown plan" };
-  const r = await Workspace.updateMany({ _id: { $in: ids(workspaceIds) } }, { $set: { plan } });
+  // An admin override is recorded as a manual plan, so the billing page says who set it.
+  const r = await Workspace.updateMany({ _id: { $in: ids(workspaceIds) } }, { $set: { plan, "billing.provider": "manual", "billing.status": "active" } });
   await audit({ action: "admin.workspace.plan_changed", actor: admin, entity: "workspace", meta: { workspaceIds, plan } });
   revalidatePath("/admin/workspaces");
   return { ok: true, message: `${r.modifiedCount} workspace${r.modifiedCount === 1 ? "" : "s"} moved to ${plan}` };
@@ -148,8 +149,8 @@ export async function adminSetWorkspaceStatus(workspaceIds: string[], status: "a
 
 async function deleteWorkspaceCascade(workspaceId: string) {
   const ws = oid(workspaceId);
-  const assets = await MediaAsset.find({ workspaceId: ws }, { storageKey: 1 }).lean();
-  await Promise.all(assets.map((a) => deleteObject(a.storageKey)));
+  const assets = await MediaAsset.find({ workspaceId: ws }, { storageKey: 1, storage: 1 }).lean();
+  await Promise.all(assets.map((a) => deleteObject(a)));
   const accounts = await SocialAccount.find({ workspaceId: ws }, { _id: 1 }).lean();
   await Promise.all([
     OAuthCredential.deleteMany({ socialAccountId: { $in: accounts.map((a) => a._id) } }),

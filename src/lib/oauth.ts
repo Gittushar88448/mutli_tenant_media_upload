@@ -28,6 +28,7 @@ export function buildAuthorizeUrl(platform: PlatformId, state: string) {
     url.searchParams.set("prompt", "consent");
     url.searchParams.set("include_granted_scopes", "true");
   }
+  if (platform === "reddit") url.searchParams.set("duration", "permanent");
   if (["x", "tiktok", "youtube"].includes(platform)) {
     url.searchParams.set("code_challenge", challenge);
     url.searchParams.set("code_challenge_method", "S256");
@@ -51,6 +52,9 @@ export async function exchangeCode(platform: PlatformId, code: string, verifier:
     body.set("code_verifier", verifier);
     body.set("client_id", id);
     headers.authorization = `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`;
+  } else if (platform === "reddit") {
+    headers.authorization = `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`;
+    headers["user-agent"] = "web:relay-scheduler:1.0 (multi-channel publisher)";
   } else {
     body.set("client_id", id);
     body.set("client_secret", secret);
@@ -89,7 +93,9 @@ export type DiscoveredAccount = {
 };
 
 async function getJson(url: string, token?: string) {
-  const res = await fetch(url, { headers: token ? { authorization: `Bearer ${token}` } : {}, signal: AbortSignal.timeout(15000) });
+  const headers: Record<string, string> = token ? { authorization: `Bearer ${token}` } : {};
+  if (url.includes("reddit.com")) headers["user-agent"] = "web:relay-scheduler:1.0 (multi-channel publisher)";
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json.error?.message ?? `Platform request failed (${res.status})`);
   return json;
@@ -159,6 +165,10 @@ export async function discoverAccounts(platform: PlatformId, token: TokenSet): P
       const j = await getJson("https://api.pinterest.com/v5/user_account", t);
       return [{ externalId: j.username, handle: j.username, accountType: j.account_type?.toLowerCase() ?? "business", avatarUrl: j.profile_image, profileUrl: `https://pinterest.com/${j.username}` }];
     }
+    case "reddit": {
+      const j = await getJson("https://oauth.reddit.com/api/v1/me", t);
+      return [{ externalId: j.id, handle: `u/${j.name}`, displayName: j.name, accountType: "user", avatarUrl: j.icon_img?.split("?")[0], profileUrl: `https://www.reddit.com/user/${j.name}` }];
+    }
   }
 }
 
@@ -175,6 +185,9 @@ export async function refreshAccessToken(platform: PlatformId, refreshToken: str
   } else if (platform === "x") {
     body.set("client_id", id);
     headers.authorization = `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`;
+  } else if (platform === "reddit") {
+    headers.authorization = `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`;
+    headers["user-agent"] = "web:relay-scheduler:1.0 (multi-channel publisher)";
   } else {
     body.set("client_id", id);
     body.set("client_secret", secret);

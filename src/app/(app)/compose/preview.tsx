@@ -1,4 +1,4 @@
-import { HeartIcon, MessageCircleIcon, SendIcon, BookmarkIcon, ThumbsUpIcon, Share2Icon } from "lucide-react";
+import { HeartIcon, MessageCircleIcon, SendIcon, BookmarkIcon, ThumbsUpIcon, Share2Icon, UsersIcon, CheckCheckIcon } from "lucide-react";
 import { MediaThumb } from "@/components/media/thumb";
 import type { MediaItem } from "@/components/media/types";
 import { PlatformIcon } from "@/components/platform-icon";
@@ -12,15 +12,22 @@ export function Preview({
   caption,
   media,
   title,
+  poll,
+  audienceSize,
 }: {
   account?: { platform: string; handle: string };
   postType?: string;
   caption: string;
   media: MediaItem[];
   title?: string;
+  poll?: { question: string; options: string[] };
+  audienceSize?: number;
 }) {
   if (!account) {
     return <div className="grain flex aspect-[9/14] items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground">Pick a channel to preview</div>;
+  }
+  if (PLATFORMS[account.platform as TargetPlatform]?.category === "community") {
+    return <ChatPreview account={account} postType={postType} caption={caption} media={media} headline={title} poll={poll} audienceSize={audienceSize} />;
   }
   const vertical = ["reel", "short", "story"].includes(postType ?? "") || (account.platform === "tiktok" && postType === "video");
   const spec = PLATFORMS[account.platform as TargetPlatform];
@@ -92,6 +99,77 @@ export function Preview({
             </>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Community destinations read as a chat: a header with the group, then the message bubble. */
+function ChatPreview({
+  account,
+  postType,
+  caption,
+  media,
+  headline,
+  poll,
+  audienceSize,
+}: {
+  account: { platform: string; handle: string };
+  postType?: string;
+  caption: string;
+  media: MediaItem[];
+  headline?: string;
+  poll?: { question: string; options: string[] };
+  audienceSize?: number;
+}) {
+  const spec = PLATFORMS[account.platform as TargetPlatform];
+  const type = spec.postTypes.find((p) => p.id === postType);
+  const showMedia = type && type.media !== "none" && media.length > 0;
+  const limit = type?.captionMax ?? spec.captionMax;
+  return (
+    <div className="overflow-hidden rounded-xl border bg-card shadow-[0_20px_50px_-30px_rgb(0_0_0/0.35)]">
+      <div className="flex items-center gap-2.5 border-b px-3 py-2.5" style={{ backgroundColor: `color-mix(in oklab, ${spec.color} 12%, transparent)` }}>
+        <PlatformIcon platform={account.platform} tone="chip" className="size-8 rounded-full p-1.5" />
+        <div className="min-w-0 leading-tight">
+          <p className="truncate text-[13px] font-semibold">{account.handle}</p>
+          <p className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground uppercase">
+            <UsersIcon className="size-3" /> {audienceSize ? `${audienceSize.toLocaleString()} members` : spec.noun}
+          </p>
+        </div>
+      </div>
+      <div className="grain space-y-2 bg-muted/30 px-3 py-4">
+        <div className="max-w-[88%] overflow-hidden rounded-2xl rounded-tl-sm border bg-card shadow-sm">
+          {showMedia && (
+            <div className={cn("grid gap-0.5", media.length > 1 && "grid-cols-2")}>
+              {media.slice(0, type?.maxItems ?? 1).slice(0, 4).map((m) => (
+                <MediaThumb key={m.id} item={m} className="aspect-square w-full" />
+              ))}
+            </div>
+          )}
+          <div className="space-y-1 px-3 py-2">
+            {headline && <p className="text-[13px] font-semibold leading-snug">{headline}</p>}
+            {(caption || postType !== "poll") && (
+              <p className="text-[13px] leading-snug whitespace-pre-wrap">
+                {caption.slice(0, limit) || <span className="text-muted-foreground">Your message appears here</span>}
+                {caption.length > limit && <span className="bg-signal/25 text-signal">{caption.slice(limit, limit + 40)}…</span>}
+              </p>
+            )}
+            <p className="flex items-center justify-end gap-1 font-mono text-[9.5px] text-muted-foreground">
+              09:00 <CheckCheckIcon className="size-3" />
+            </p>
+          </div>
+        </div>
+        {postType === "poll" && (
+          <div className="max-w-[88%] space-y-1.5 rounded-2xl rounded-tl-sm border bg-card px-3 py-2.5 shadow-sm">
+            <p className="text-[13px] font-semibold">{poll?.question || "Poll question"}</p>
+            <p className="font-mono text-[9.5px] text-muted-foreground uppercase">Poll</p>
+            {(poll?.options.filter((o) => o.trim()).length ? poll.options.filter((o) => o.trim()) : ["Answer A", "Answer B"]).map((o) => (
+              <div key={o} className="flex items-center gap-2 rounded-md border px-2 py-1 text-[12.5px]">
+                <span className="size-3 rounded-full border" /> {o}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

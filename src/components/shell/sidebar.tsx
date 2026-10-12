@@ -103,6 +103,12 @@ export function Sidebar({ data, mode = "app", onNavigate }: { data: ShellData; m
               );
             })}
           </div>
+          {data.workspace?.plan !== "agency" && (
+            <Link href="/billing" onClick={onNavigate} className="mt-3 flex items-center justify-between rounded-[5px] bg-foreground px-2.5 py-1.5 text-[12px] font-medium text-background hover:bg-foreground/85">
+              {data.workspace?.plan === "free" ? "Unlock per-platform edits" : "Compare plans"}
+              <span aria-hidden>→</span>
+            </Link>
+          )}
         </div>
       )}
 

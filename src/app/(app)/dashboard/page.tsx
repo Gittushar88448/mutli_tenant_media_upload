@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { formatInTimeZone } from "date-fns-tz";
-import { ArrowUpRightIcon, CableIcon, PenLineIcon, TriangleAlertIcon } from "lucide-react";
+import { ArrowRightIcon, ArrowUpRightIcon, BookOpenIcon, CableIcon, PenLineIcon, TriangleAlertIcon } from "lucide-react";
 import { getWorkspaceContext } from "@/lib/auth/session";
 import { getWorkspaceOverview } from "@/lib/queries/workspace";
+import { getSetupProgress } from "@/lib/queries/guide";
 import { PageHeader, SectionTitle } from "@/components/shell/page-header";
 import { PlatformIcon, PlatformStack } from "@/components/platform-icon";
 import { StatusBadge } from "@/components/status-badge";
@@ -19,7 +20,9 @@ export const metadata: Metadata = { title: "Overview" };
 export default async function Dashboard() {
   const ctx = await getWorkspaceContext();
   const tz = ctx.workspace.timezone;
-  const o = await getWorkspaceOverview(ctx.workspace.id, tz);
+  const [o, setup] = await Promise.all([getWorkspaceOverview(ctx.workspace.id, tz), getSetupProgress(ctx.workspace.id, ctx.workspace.plan)]);
+  // New workspaces get a pointer to the guide until the basics are in place.
+  const nextStep = setup.steps.find((s) => !s.done && (s.key === "social" || s.key === "community" || s.key === "post"));
 
   const published = o.status.published ?? 0;
   const failed = (o.status.failed ?? 0) + (o.status.needs_action ?? 0);
@@ -54,6 +57,28 @@ export default async function Dashboard() {
           </>
         }
       />
+
+      {nextStep && (
+        <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-md border border-dashed px-5 py-4">
+          <BookOpenIcon className="size-5 text-signal" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">
+              Getting started · {setup.done} of {setup.steps.length} done
+            </p>
+            <p className="text-[13px] text-muted-foreground">
+              Next: {nextStep.title.toLowerCase()}. The guide walks through every platform, community and plan.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={nextStep.href}>{nextStep.cta}</Link>
+          </Button>
+          <Button variant="signal" size="sm" asChild>
+            <Link href="/guide">
+              Open the guide <ArrowRightIcon />
+            </Link>
+          </Button>
+        </section>
+      )}
 
       {/* Ledger strip */}
       <section className="grid grid-cols-2 border-y md:grid-cols-4 md:divide-x">

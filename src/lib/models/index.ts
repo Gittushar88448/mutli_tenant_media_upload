@@ -17,7 +17,9 @@ const UserSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    // Empty for accounts that only ever signed in with Google.
+    passwordHash: { type: String, select: false },
+    googleId: { type: String, unique: true, sparse: true },
     role: { type: String, enum: ["user", "admin"], default: "user", index: true },
     status: { type: String, enum: ["active", "suspended", "invited"], default: "active", index: true },
     avatarUrl: String,
@@ -28,13 +30,8 @@ const UserSchema = new Schema(
   ts
 );
 
-export const PLANS = ["free", "creator", "studio", "agency"] as const;
-export const PLAN_LIMITS: Record<(typeof PLANS)[number], { accounts: number; postsPerMonth: number; storageMb: number; seats: number }> = {
-  free: { accounts: 3, postsPerMonth: 30, storageMb: 500, seats: 1 },
-  creator: { accounts: 8, postsPerMonth: 300, storageMb: 10_000, seats: 2 },
-  studio: { accounts: 25, postsPerMonth: 2000, storageMb: 50_000, seats: 10 },
-  agency: { accounts: 150, postsPerMonth: 20000, storageMb: 500_000, seats: 50 },
-};
+import { PLANS, PLAN_LIMITS } from "@/lib/plans";
+export { PLANS, PLAN_LIMITS };
 
 const WorkspaceSchema = new Schema(
   {
@@ -45,6 +42,18 @@ const WorkspaceSchema = new Schema(
     status: { type: String, enum: ["active", "suspended"], default: "active" },
     ownerId: { type: ObjectId, ref: "User", required: true, index: true },
     requireApproval: { type: Boolean, default: false },
+    // Filter packs installed from the media editor's filter store.
+    filterPacks: { type: [String], default: [] },
+    // Subscription state. Razorpay is the source of truth when configured; its webhook writes here.
+    billing: {
+      provider: { type: String, enum: ["razorpay", "demo", "manual"] },
+      customerId: { type: String, index: true, sparse: true },
+      subscriptionId: String,
+      status: { type: String, enum: ["active", "trialing", "past_due", "canceled", "incomplete"] },
+      interval: { type: String, enum: ["month", "year"] },
+      currentPeriodEnd: Date,
+      cancelAtPeriodEnd: Boolean,
+    },
   },
   ts
 );
@@ -84,7 +93,18 @@ const SocialAccountSchema = new Schema(
       signingSecretEnc: String,
       fieldMap: Schema.Types.Mixed,
       notifyEmail: String,
+      // Community connectors: where to send (secrets live encrypted in OAuthCredential).
+      mode: String, // "api" | "assisted" (WhatsApp Channels and Communities have no API)
+      chatId: String,
+      channelId: String,
+      guildId: String,
+      instanceUrl: String,
+      phoneNumberId: String,
+      recipients: [String],
+      inviteUrl: String,
     },
+    // Members, subscribers or followers, refreshed on connect and on each health check.
+    audienceSize: Number,
   },
   ts
 );
@@ -113,6 +133,8 @@ const MediaAssetSchema = new Schema(
     kind: { type: String, enum: ["image", "video", "audio"], required: true },
     filename: String,
     storageKey: { type: String, required: true },
+    // Which storage driver holds the bytes (see lib/storage.ts).
+    storage: { type: String, enum: ["local", "cloudinary"], default: "local" },
     mime: String,
     sizeBytes: Number,
     width: Number,
@@ -124,10 +146,29 @@ const MediaAssetSchema = new Schema(
     tags: [String],
     // Audio only: where it came from, kept for licence disputes.
     audio: { source: { type: String, enum: ["upload", "library"] }, licenseRef: String, title: String },
+    // Rendered per-channel cuts point back at their original and are hidden from the library.
+    variantOf: { type: ObjectId, ref: "MediaAsset", index: true, sparse: true },
+    specHash: String,
+    // Copies saved from the media editor: the file they came from and the edit that made them.
+    editOf: { type: ObjectId, ref: "MediaAsset" },
+    edit: Schema.Types.Mixed,
   },
   ts
 );
 MediaAssetSchema.index({ workspaceId: 1, createdAt: -1 });
+
+/** A workspace's own filter: saved adjustments, optionally on top of an imported .cube LUT. */
+const CustomFilterSchema = new Schema(
+  {
+    workspaceId: { type: ObjectId, ref: "Workspace", required: true, index: true },
+    createdBy: { type: ObjectId, ref: "User" },
+    name: { type: String, required: true, trim: true },
+    adjust: Schema.Types.Mixed,
+    // Imported LUT, 16-bit per channel, red fastest.
+    lut: { size: Number, data: Buffer, source: String },
+  },
+  ts
+);
 
 /* ---------- Posts ---------- */
 
@@ -159,6 +200,13 @@ const PostSchema = new Schema(
     status: { type: String, enum: POST_STATUSES, default: "draft", index: true },
     scheduledAt: Date,
     timezone: { type: String, default: "UTC" },
+    // Shared by every channel posting this as a poll (Telegram, Discord, Mastodon).
+    poll: {
+      question: String,
+      options: [String],
+      allowMultiple: Boolean,
+      durationHours: Number,
+    },
     approval: {
       status: { type: String, enum: ["not_required", "pending", "approved", "rejected"], default: "not_required" },
       by: { type: ObjectId, ref: "User" },
@@ -181,12 +229,26 @@ const PostTargetSchema = new Schema(
     postType: { type: String, required: true },
     captionOverride: String,
     options: { type: Schema.Types.Mixed, default: {} },
+    // This channel's own cut of the first video. Empty means "same as the post".
+    editSpec: {
+      trimStartMs: Number,
+      trimEndMs: Number,
+      crop: String,
+      audioTrackId: { type: ObjectId, ref: "MediaAsset" },
+      audioVolume: Number,
+      keepOriginalAudio: Boolean,
+    },
+    renderedAssetId: { type: ObjectId, ref: "MediaAsset" },
     status: { type: String, enum: TARGET_STATUSES, default: "scheduled" },
     // Saved platform handles so a retry resumes instead of re-uploading.
     platformContainerId: String,
     uploadSessionUrl: String,
     platformPostId: String,
+    // Extra ids when one delivery is several messages (an album, or one per WhatsApp recipient).
+    platformMessageIds: [String],
     permalink: String,
+    // Edits made after the message went out.
+    liveEdits: [{ _id: false, at: Date, by: { type: ObjectId, ref: "User" }, ok: Boolean, error: String }],
     attempts: { type: Number, default: 0 },
     nextAttemptAt: Date,
     claimedAt: Date,
@@ -274,6 +336,7 @@ export const Membership = m("Membership", MembershipSchema);
 export const SocialAccount = m("SocialAccount", SocialAccountSchema);
 export const OAuthCredential = m("OAuthCredential", OAuthCredentialSchema);
 export const MediaAsset = m("MediaAsset", MediaAssetSchema);
+export const CustomFilter = m("CustomFilter", CustomFilterSchema);
 export const Post = m("Post", PostSchema);
 export const PostTarget = m("PostTarget", PostTargetSchema);
 export const PublishAttempt = m("PublishAttempt", PublishAttemptSchema);

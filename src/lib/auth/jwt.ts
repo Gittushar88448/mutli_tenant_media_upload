@@ -29,7 +29,8 @@ export async function verifySession(token: string | undefined): Promise<SessionP
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
-    if (!payload.sub) return null;
+    // Flow tokens carry an audience and never count as a session.
+    if (!payload.sub || payload.aud) return null;
     return { sub: payload.sub, role: payload.role === "admin" ? "admin" : "user", v: Number(payload.v ?? 0) };
   } catch {
     return null;
@@ -43,3 +44,18 @@ export const sessionCookieOptions = {
   path: "/",
   maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
 };
+
+/** Short-lived signed state for multi-step flows such as Google sign-in. */
+export async function signFlowToken(audience: string, data: Record<string, string>, minutes: number) {
+  return new SignJWT(data).setProtectedHeader({ alg: "HS256" }).setAudience(audience).setIssuedAt().setExpirationTime(`${minutes}m`).sign(secret());
+}
+
+export async function verifyFlowToken(audience: string, token: string | undefined): Promise<Record<string, string> | null> {
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"], audience });
+    return Object.fromEntries(Object.entries(payload).filter(([, v]) => typeof v === "string")) as Record<string, string>;
+  } catch {
+    return null;
+  }
+}

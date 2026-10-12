@@ -8,7 +8,9 @@ import { can, getWorkspaceContext } from "@/lib/auth/session";
 import { encrypt, randomToken } from "@/lib/crypto";
 import { audit } from "@/lib/audit";
 import { assertSafeWebhookUrl } from "@/lib/ssrf";
-import { PLATFORMS, SOCIAL_PLATFORMS, isPlatformConfigured, type PlatformId } from "@/lib/platforms";
+import { COMMUNITY_PLATFORMS, PLATFORMS, SOCIAL_PLATFORMS, isPlatformConfigured, type CommunityId, type PlatformId } from "@/lib/platforms";
+import { ConnectorError, bskySession, discordVerify, mastodonVerify, slackVerify, telegramVerify, whatsappVerify } from "@/lib/publishing/connectors";
+import { encryptSecrets } from "@/lib/publishing/direct";
 import { demoMode } from "@/lib/publishing/n8n";
 import type { FormState } from "./auth";
 
@@ -24,8 +26,9 @@ async function assertCapacity(workspaceId: string, plan: string) {
   if (n >= limit) throw new Error(`Your plan allows ${limit} channels. Disable one or upgrade.`);
 }
 
+type SandboxPlatform = PlatformId | CommunityId;
 const SandboxSchema = z.object({
-  platform: z.enum(SOCIAL_PLATFORMS.map((p) => p.id) as [PlatformId, ...PlatformId[]]),
+  platform: z.enum([...SOCIAL_PLATFORMS, ...COMMUNITY_PLATFORMS].map((p) => p.id) as [SandboxPlatform, ...SandboxPlatform[]]),
   handle: z.string().trim().min(2).max(60),
   displayName: z.string().trim().max(80).optional(),
   profileUrl: z.union([z.url(), z.literal("")]).optional(),
@@ -49,7 +52,9 @@ export async function connectSandboxAccountAction(_: FormState, formData: FormDa
     const settings = await AppSettings.findOne({ key: "global" }).lean();
     if (settings?.disabledPlatforms?.includes(parsed.data.platform)) return { error: "This platform is turned off by the administrator." };
 
-    const handle = parsed.data.handle.startsWith("@") || parsed.data.platform === "youtube" || parsed.data.platform === "facebook" ? parsed.data.handle : `@${parsed.data.handle}`;
+    const p = parsed.data.platform;
+    const keepAsTyped = parsed.data.handle.startsWith("@") || ["youtube", "facebook", "whatsapp", "slack", "discord", "reddit"].includes(p);
+    const handle = keepAsTyped ? parsed.data.handle : `@${parsed.data.handle}`;
     const acc = await SocialAccount.create({
       workspaceId: oid(ctx.workspace.id),
       platform: parsed.data.platform,
@@ -58,6 +63,8 @@ export async function connectSandboxAccountAction(_: FormState, formData: FormDa
       displayName: parsed.data.displayName || handle,
       accountType: parsed.data.accountType || defaultAccountType(parsed.data.platform),
       profileUrl: parsed.data.profileUrl || undefined,
+      audienceSize: PLATFORMS[p].category === "community" ? 40 + Math.floor(Math.random() * 4000) : undefined,
+      connector: p === "whatsapp" ? { mode: parsed.data.accountType === "channel" ? "assisted" : "api", recipients: ["+15550000000"] } : undefined,
       sandbox: true,
       connectedBy: oid(ctx.user.id),
       scopes: PLATFORMS[parsed.data.platform].oauth?.scopes,
@@ -70,14 +77,155 @@ export async function connectSandboxAccountAction(_: FormState, formData: FormDa
     });
     await audit({ action: "channel.connected", actor: ctx.user, workspaceId: ctx.workspace.id, entity: "social_account", entityId: String(acc._id), meta: { platform: acc.platform, sandbox: true } });
     revalidatePath("/accounts");
+    revalidatePath("/communities");
     return { ok: true, message: `${PLATFORMS[parsed.data.platform].name} sandbox channel added` };
   } catch (e) {
     return { error: (e as Error).message };
   }
 }
 
-function defaultAccountType(p: PlatformId) {
-  return { instagram: "business", facebook: "page", youtube: "channel", tiktok: "creator", linkedin: "member", x: "user", threads: "profile", pinterest: "business" }[p];
+function defaultAccountType(p: SandboxPlatform) {
+  return {
+    instagram: "business",
+    facebook: "page",
+    youtube: "channel",
+    tiktok: "creator",
+    linkedin: "member",
+    x: "user",
+    threads: "profile",
+    pinterest: "business",
+    reddit: "user",
+    telegram: "channel",
+    whatsapp: "group",
+    discord: "channel",
+    slack: "channel",
+    bluesky: "profile",
+    mastodon: "profile",
+  }[p];
+}
+
+/**
+ * Connects a community or messaging destination with the credential that platform uses
+ * (bot token, channel webhook, app password, Cloud API token). Each one is checked against
+ * the platform first, so a wrong token fails here rather than at 9:00 on launch day.
+ * Secrets are encrypted into OAuthCredential; only routing details go on the account.
+ */
+export async function connectCommunityAction(_: FormState, formData: FormData): Promise<FormState> {
+  try {
+    const ctx = await guard();
+    const platform = String(formData.get("platform")) as CommunityId;
+    const spec = COMMUNITY_PLATFORMS.find((p) => p.id === platform);
+    if (!spec) return { error: "Unknown platform." };
+    const mode = String(formData.get("mode") || spec.credentials?.modes?.[0]?.id || "");
+    const v = (k: string) => String(formData.get(k) ?? "").trim();
+    for (const f of spec.credentials?.fields ?? []) {
+      if (f.required && (!f.mode || f.mode === mode) && !v(f.key)) return { error: `${f.label} is required.` };
+    }
+    await connectDB();
+    await assertCapacity(ctx.workspace.id, ctx.workspace.plan);
+    const settings = await AppSettings.findOne({ key: "global" }).lean();
+    if (settings?.disabledPlatforms?.includes(platform)) return { error: "This platform is turned off by the administrator." };
+
+    let account: { externalId: string; handle: string; displayName?: string; accountType: string; profileUrl?: string; audienceSize?: number; connector: Record<string, unknown> };
+    let secrets: Record<string, string> = {};
+    switch (platform) {
+      case "telegram": {
+        const t = await telegramVerify(v("botToken"), v("chatId"));
+        account = { externalId: t.externalId, handle: t.handle, displayName: t.displayName, accountType: t.accountType, profileUrl: t.profileUrl, audienceSize: t.audienceSize, connector: { chatId: t.externalId } };
+        secrets = { botToken: v("botToken") };
+        break;
+      }
+      case "discord": {
+        const d = await discordVerify(v("webhookUrl"));
+        account = { externalId: d.externalId, handle: d.name, displayName: d.name, accountType: "channel", profileUrl: d.guildId ? `https://discord.com/channels/${d.guildId}/${d.channelId}` : undefined, connector: { channelId: d.channelId, guildId: d.guildId } };
+        secrets = { webhookUrl: v("webhookUrl") };
+        break;
+      }
+      case "slack": {
+        const s = await slackVerify(v("botToken"), v("channelId"));
+        account = {
+          externalId: s.channel.id,
+          handle: `#${s.channel.name}`,
+          displayName: s.team,
+          accountType: s.channel.is_private ? "private channel" : "channel",
+          profileUrl: s.url ? `${s.url.replace(/\/$/, "")}/archives/${s.channel.id}` : undefined,
+          audienceSize: s.channel.num_members,
+          connector: { channelId: s.channel.id },
+        };
+        secrets = { botToken: v("botToken") };
+        break;
+      }
+      case "whatsapp": {
+        if (mode === "assisted") {
+          const invite = v("inviteUrl");
+          if (invite && !/^https:\/\/(www\.)?(whatsapp\.com|chat\.whatsapp\.com|wa\.me)\//.test(invite)) return { error: "Use the WhatsApp channel or community invite link." };
+          account = { externalId: `assisted_${randomToken(8)}`, handle: v("name"), displayName: v("name"), accountType: "channel", profileUrl: invite || undefined, connector: { mode: "assisted", inviteUrl: invite || undefined } };
+          secrets = {};
+        } else {
+          const recipients = v("recipients").split(/[\n,]+/).map((r) => r.trim()).filter(Boolean).slice(0, 256);
+          if (!recipients.length) return { error: "Add at least one group or contact." };
+          const w = await whatsappVerify(v("phoneNumberId"), v("accessToken"));
+          account = {
+            externalId: `${v("phoneNumberId")}:${randomToken(4)}`,
+            handle: v("name"),
+            displayName: `${w.name || "WhatsApp"} · ${w.display}`,
+            accountType: recipients.some((r) => !/^\+?\d{6,15}$/.test(r)) ? "group" : "broadcast",
+            audienceSize: recipients.length,
+            connector: { mode: "api", phoneNumberId: v("phoneNumberId"), recipients },
+          };
+          secrets = { accessToken: v("accessToken") };
+        }
+        break;
+      }
+      case "bluesky": {
+        const service = v("service") ? (await assertSafeWebhookUrl(v("service"))).origin : "https://bsky.social";
+        const s = await bskySession(service, v("identifier"), v("appPassword"));
+        account = { externalId: s.did, handle: `@${s.handle}`, displayName: s.handle, accountType: "profile", profileUrl: `https://bsky.app/profile/${s.handle}`, connector: { instanceUrl: service } };
+        secrets = { identifier: s.handle, appPassword: v("appPassword") };
+        break;
+      }
+      case "mastodon": {
+        const m = await mastodonVerify(v("instanceUrl"), v("accessToken"));
+        account = { externalId: `${new URL(m.base).host}:${m.id}`, handle: `@${m.acct}@${new URL(m.base).host}`, displayName: m.name, accountType: "profile", profileUrl: m.url, audienceSize: m.followers, connector: { instanceUrl: m.base } };
+        secrets = { accessToken: v("accessToken") };
+        break;
+      }
+      default:
+        return { error: "Unknown platform." };
+    }
+
+    const acc = await SocialAccount.findOneAndUpdate(
+      { workspaceId: oid(ctx.workspace.id), platform, externalId: account.externalId },
+      {
+        $set: {
+          handle: account.handle,
+          displayName: account.displayName,
+          accountType: account.accountType,
+          profileUrl: account.profileUrl,
+          audienceSize: account.audienceSize,
+          connector: account.connector,
+          status: "active",
+          sandbox: false,
+          connectedBy: oid(ctx.user.id),
+          lastHealthCheckAt: new Date(),
+        },
+      },
+      { upsert: true, new: true }
+    );
+    await OAuthCredential.findOneAndUpdate(
+      { socialAccountId: acc._id },
+      { $set: { workspaceId: oid(ctx.workspace.id), accessTokenEnc: encryptSecrets(secrets), expiresAt: undefined, keyId: "v1" } },
+      { upsert: true }
+    );
+    await audit({ action: "channel.connected", actor: ctx.user, workspaceId: ctx.workspace.id, entity: "social_account", entityId: String(acc._id), meta: { platform, mode: mode || undefined } });
+    revalidatePath("/accounts");
+    revalidatePath("/communities");
+    return { ok: true, message: `${spec.name} · ${account.handle} connected` };
+  } catch (e) {
+    if (e instanceof ConnectorError) return { error: e.message };
+    const msg = (e as Error).message;
+    return { error: /fetch failed|ENOTFOUND|ECONNREFUSED|timeout/i.test(msg) ? "Couldn't reach the platform to check these details. Try again in a moment." : msg };
+  }
 }
 
 const WebhookSchema = z.object({

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PLAN_INFO, type Plan } from "@/lib/plans";
 import Link from "next/link";
 import { getAdminOverview } from "@/lib/queries/admin";
 import { PageHeader, SectionTitle } from "@/components/shell/page-header";
@@ -39,7 +40,12 @@ export default async function AdminHome() {
       <section className="grid grid-cols-2 border-y md:grid-cols-3 md:divide-x xl:grid-cols-6">
         <Stat label="Users" value={o.users.total} foot={`${o.users.activeWeek} active this week`} href="/admin/users" />
         <Stat label="Suspended" value={o.users.byStatus.suspended ?? 0} foot={`${o.users.admins} admins`} href="/admin/users?status=suspended" />
-        <Stat label="Workspaces" value={planTotal} foot={o.plans.map((p) => `${p.n} ${p._id}`).join(" · ")} href="/admin/workspaces" />
+        <Stat
+          label="Workspaces"
+          value={planTotal}
+          foot={`≈ ₹${o.plans.reduce((sum, p) => sum + p.n * (PLAN_INFO[p._id as Plan]?.monthly ?? 0), 0).toLocaleString("en-IN")} MRR · ${o.plans.filter((p) => p._id !== "free").reduce((n, p) => n + p.n, 0)} paid`}
+          href="/admin/workspaces"
+        />
         <Stat label="Delivered" value={delivered} foot={rate === null ? "no deliveries yet" : `${rate}% success`} href="/admin/publishing?status=published" />
         <Stat label="Queue" value={o.due + o.inFlight} foot={`${o.due} due · ${o.inFlight} in flight`} accent={o.due > 50} href="/admin/publishing?status=scheduled,retrying,queued" />
         <Stat label="Storage" value={formatBytes(storage)} foot={`${needsReauth} channels need reconnecting`} accent={needsReauth > 0} href="/admin/accounts?status=needs_reauth" />

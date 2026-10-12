@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
     "typecheck": "next typegen && tsc --noEmit",
-    "n8n:build": "python3 n8n/build-workflows.py"
+    "n8n:build": "python3 n8n/build-workflows.py",
+    "razorpay:plans": "tsx --env-file-if-exists=.env.local scripts/razorpay-plans.ts"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.3.0",

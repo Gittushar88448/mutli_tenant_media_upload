@@ -129,6 +129,8 @@ export type AdminUserRow = {
   postCount: number;
   publishedCount: number;
   accountCount: number;
+  /** Has signed in with Google at least once. */
+  google: boolean;
 };
 
 export async function listUsers(p: TableParams) {
@@ -184,6 +186,7 @@ export async function listUsers(p: TableParams) {
         postCount: { $ifNull: [{ $first: "$postStats.posts" }, 0] },
         publishedCount: { $ifNull: [{ $first: "$postStats.published" }, 0] },
         accountCount: { $size: "$accs" },
+        google: { $toBool: { $ifNull: ["$googleId", false] } },
       },
     },
     ...paginate(p),

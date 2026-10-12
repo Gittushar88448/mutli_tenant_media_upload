@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, compact }: { next?: string; compact?: boolean }) {
   const [state, action, pending] = useActionState(loginAction, undefined);
   return (
-    <form action={action} className="mt-8 grid gap-5">
+    <form action={action} className={compact ? "grid gap-5" : "mt-8 grid gap-5"}>
       <input type="hidden" name="next" value={next ?? ""} />
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>

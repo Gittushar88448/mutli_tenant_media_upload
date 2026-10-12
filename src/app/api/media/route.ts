@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
   const ext = mime.split("/")[1]!.replace("quicktime", "mov").replace("mpeg", "mp3").replace("x-", "");
   const key = `workspaces/${ctx.workspace.id}/originals/${new Date().toISOString().slice(0, 7)}/${randomToken(12)}.${ext}`;
-  await putObject(key, buf);
+  const { storage } = await putObject(key, buf, mime);
 
   const num = (k: string) => {
     const v = Number(form.get(k));
@@ -81,6 +81,7 @@ export async function POST(req: Request) {
     kind,
     filename: file.name.slice(0, 200),
     storageKey: key,
+    storage,
     mime,
     sizeBytes: file.size,
     width: num("width"),

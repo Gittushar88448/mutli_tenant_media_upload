@@ -12,16 +12,24 @@ import {
   ScrollTextIcon,
   SlidersHorizontalIcon,
   AtSignIcon,
+  MessagesSquareIcon,
+  CreditCardIcon,
+  BookOpenIcon,
+  ActivityIcon,
 } from "lucide-react";
 
 export const APP_NAV = [
   { href: "/dashboard", label: "Overview", icon: LayoutGridIcon, key: "G O" },
   { href: "/compose", label: "Compose", icon: PenLineIcon, key: "C" },
+  { href: "/communities", label: "Communities", icon: MessagesSquareIcon, key: "G U" },
   { href: "/posts", label: "Queue", icon: ListOrderedIcon, key: "G Q" },
   { href: "/calendar", label: "Calendar", icon: CalendarRangeIcon, key: "G C" },
+  { href: "/live", label: "Live view", icon: ActivityIcon, key: "G L" },
   { href: "/media", label: "Media", icon: FilmIcon, key: "G M" },
   { href: "/accounts", label: "Channels", icon: CableIcon, key: "G A" },
+  { href: "/billing", label: "Plan & billing", icon: CreditCardIcon, key: "G B" },
   { href: "/settings", label: "Settings", icon: Settings2Icon, key: "G S" },
+  { href: "/guide", label: "Guide", icon: BookOpenIcon, key: "G G" },
 ];
 
 export const ADMIN_NAV = [

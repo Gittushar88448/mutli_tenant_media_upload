@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatInTimeZone } from "date-fns-tz";
-import { ExternalLinkIcon, FlaskConicalIcon } from "lucide-react";
+import { ExternalLinkIcon, FlaskConicalIcon, PencilIcon, ScissorsIcon, VoteIcon } from "lucide-react";
 import { can, getWorkspaceContext } from "@/lib/auth/session";
 import { getPostDetail } from "@/lib/queries/workspace";
-import { isOid } from "@/lib/models";
+import { MediaAsset, isOid, oid } from "@/lib/models";
+import { planFeatures } from "@/lib/plans";
 import { PLATFORMS, type TargetPlatform } from "@/lib/platforms";
 import { PageHeader, SectionTitle } from "@/components/shell/page-header";
 import { PlatformIcon } from "@/components/platform-icon";
@@ -15,6 +16,7 @@ import { MediaThumb } from "@/components/media/thumb";
 import { Badge } from "@/components/ui/badge";
 import { PostActions, TargetActions } from "./actions";
 import { AutoRefresh } from "./auto-refresh";
+import { EditTargetButton } from "./edit-target";
 
 export const metadata: Metadata = { title: "Post" };
 
@@ -27,6 +29,13 @@ export default async function PostDetail({ params }: { params: Promise<{ id: str
   const post = await getPostDetail(ctx.workspace.id, id);
   if (!post) notFound();
   const tz = ctx.workspace.timezone;
+  const features = planFeatures(ctx.workspace.plan);
+  const audioTracks = (await MediaAsset.find({ workspaceId: oid(ctx.workspace.id), kind: "audio", status: "ready" }, { filename: 1 }).sort({ createdAt: -1 }).limit(100).lean()).map((a) => ({ id: String(a._id), filename: a.filename ?? "track" }));
+  const firstItem = [...(post.media ?? [])].sort((a: { position?: number }, b: { position?: number }) => (a.position ?? 0) - (b.position ?? 0))[0];
+  const firstAsset = firstItem ? post.assets.find((x: { _id: unknown }) => String(x._id) === String(firstItem.assetId)) : undefined;
+  const video = firstAsset?.kind === "video" ? { durationMs: firstAsset.durationMs } : undefined;
+  const postSpec = { ...(firstItem?.editSpec ?? {}), audioTrackId: firstItem?.audioTrackId ? String(firstItem.audioTrackId) : undefined };
+  const canEdit = can(ctx.role, "editor");
   const live = ["publishing", "scheduled"].includes(post.status) && post.targets.some((t: { status: string }) => ["queued", "preparing", "uploading", "processing", "retrying"].includes(t.status));
 
   return (
@@ -41,7 +50,7 @@ export default async function PostDetail({ params }: { params: Promise<{ id: str
             {post.scheduledAt && <span className="font-mono text-xs">{formatInTimeZone(post.scheduledAt, tz, "EEEE d MMMM yyyy, HH:mm")} · {tz}</span>}
           </span>
         }
-        actions={<PostActions postId={id} status={post.status} canEdit={can(ctx.role, "editor")} canApprove={can(ctx.role, "approver")} />}
+        actions={<PostActions postId={id} status={post.status} canEdit={canEdit} canApprove={can(ctx.role, "approver")} />}
       />
 
       <div className="grid gap-10 lg:grid-cols-[1fr_340px]">
@@ -72,7 +81,32 @@ export default async function PostDetail({ params }: { params: Promise<{ id: str
                         View <ExternalLinkIcon className="size-3.5" />
                       </a>
                     )}
-                    <TargetActions targetId={String(t._id)} status={t.status} platform={t.platform} canEdit={can(ctx.role, "editor")} />
+                    {canEdit && ["scheduled", "retrying", "failed", "needs_action", "cancelled", "published"].includes(t.status) && post.status !== "draft" && (
+                      <EditTargetButton
+                        target={{
+                          id: String(t._id),
+                          platform: t.platform,
+                          handle: t.account.handle,
+                          status: t.status,
+                          postType: t.postType,
+                          captionOverride: t.captionOverride ?? "",
+                          options: t.options ?? {},
+                          editSpec: t.editSpec && Object.values(t.editSpec).some((x) => x != null) ? JSON.parse(JSON.stringify(t.editSpec)) : null,
+                        }}
+                        baseCaption={post.baseCaption ?? ""}
+                        video={video}
+                        audioTracks={audioTracks}
+                        postSpec={JSON.parse(JSON.stringify(postSpec))}
+                        features={features}
+                      />
+                    )}
+                    <TargetActions
+                      targetId={String(t._id)}
+                      status={t.status}
+                      platform={t.platform}
+                      canEdit={canEdit}
+                      assisted={t.lastErrorCode === "ASSISTED_POST_DUE" ? { text: [t.options?.headline, (t.captionOverride ?? "").trim() || post.baseCaption].filter(Boolean).join("\n\n"), openUrl: t.account.connector?.inviteUrl ?? t.account.profileUrl ?? null } : undefined}
+                    />
                   </div>
                   {/* Step rail */}
                   <div className="grid grid-cols-6 gap-1 px-4 pt-3">
@@ -107,12 +141,42 @@ export default async function PostDetail({ params }: { params: Promise<{ id: str
                     </details>
                   )}
                   {!t.attemptsLog.length && <div className="h-3" />}
-                  {t.captionOverride && (
-                    <div className="border-t px-4 py-3 text-sm">
-                      <Badge variant="outline" className="mb-1.5">
-                        Own caption
-                      </Badge>
-                      <p className="whitespace-pre-wrap text-muted-foreground">{t.captionOverride}</p>
+                  {(t.captionOverride || t.options?.headline || t.editSpec?.crop || t.editSpec?.trimStartMs || t.editSpec?.trimEndMs || t.editSpec?.audioTrackId || t.liveEdits?.length || t.postType === "poll") && (
+                    <div className="space-y-2 border-t px-4 py-3 text-sm">
+                      <div className="flex flex-wrap gap-1.5">
+                        {(t.captionOverride || t.options?.headline) && <Badge variant="outline">Own text</Badge>}
+                        {t.postType === "poll" && (
+                          <Badge variant="outline" className="gap-1">
+                            <VoteIcon /> Poll
+                          </Badge>
+                        )}
+                        {(t.editSpec?.crop || t.editSpec?.trimStartMs || t.editSpec?.trimEndMs || t.editSpec?.audioTrackId) && (
+                          <Badge variant="outline" className="gap-1">
+                            <ScissorsIcon /> Own cut
+                            {t.editSpec?.crop && t.editSpec.crop !== "original" ? ` · ${t.editSpec.crop}` : ""}
+                            {t.editSpec?.trimStartMs || t.editSpec?.trimEndMs ? ` · ${((t.editSpec.trimStartMs ?? 0) / 1000).toFixed(1)}–${t.editSpec.trimEndMs ? (t.editSpec.trimEndMs / 1000).toFixed(1) : "end"}s` : ""}
+                            {t.editSpec?.audioTrackId ? " · soundtrack" : ""}
+                          </Badge>
+                        )}
+                        {t.rendered && <Badge variant="secondary">Rendered {t.rendered.width && t.rendered.height ? `${t.rendered.width}×${t.rendered.height}` : ""}</Badge>}
+                        {t.liveEdits?.length > 0 && (
+                          <Badge variant="outline" className="gap-1">
+                            <PencilIcon /> Edited {t.liveEdits.length}× after sending{t.liveEdits.some((e: { ok: boolean }) => !e.ok) ? " (one failed)" : ""}
+                          </Badge>
+                        )}
+                      </div>
+                      {t.options?.headline && <p className="font-semibold">{t.options.headline}</p>}
+                      {t.captionOverride && <p className="whitespace-pre-wrap text-muted-foreground">{t.captionOverride}</p>}
+                      {t.postType === "poll" && post.poll?.question && (
+                        <div className="rounded-md border bg-muted/30 px-3 py-2">
+                          <p className="font-medium">{post.poll.question}</p>
+                          <ul className="mt-1 list-inside list-disc text-muted-foreground">
+                            {post.poll.options.map((o: string) => (
+                              <li key={o}>{o}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

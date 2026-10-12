@@ -62,7 +62,8 @@ export async function loginAction(_: FormState, formData: FormData): Promise<For
   if (!parsed.success) return { error: "Enter your email and password." };
   await connectDB();
   const user = await User.findOne({ email: parsed.data.email }).select("+passwordHash");
-  const ok = user && (await bcrypt.compare(parsed.data.password, user.passwordHash));
+  if (user && !user.passwordHash) return { error: "This account signs in with Google. Use Continue with Google above." };
+  const ok = user?.passwordHash && (await bcrypt.compare(parsed.data.password, user.passwordHash));
   if (!user || !ok) return { error: "That email and password don't match." };
   if (user.status === "suspended") return { error: "This account is suspended. Contact support." };
 

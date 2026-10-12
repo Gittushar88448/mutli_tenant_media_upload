@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/db";
 import { MediaAsset, Membership, isOid } from "@/lib/models";
 import { getCurrentUser } from "@/lib/auth/session";
 import { verifyMediaToken } from "@/lib/crypto";
-import { readObjectStream, statObject } from "@/lib/storage";
+import { publicUrl, readObjectStream, statObject } from "@/lib/storage";
 
 /**
  * Serves media to members of the owning workspace, or to anyone holding a short-lived
@@ -25,6 +25,13 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/media/[id]/f
   }
   if (!allowed) return new Response("Forbidden", { status: 403 });
 
+  // Cloudinary files are served from its CDN once access is checked.
+  const cdn = publicUrl(asset);
+  if (cdn) {
+    if (sp.get("download")) return Response.redirect(cdn.replace("/upload/", `/upload/fl_attachment/`), 302);
+    return Response.redirect(cdn, 302);
+  }
+
   const st = await statObject(asset.storageKey);
   if (!st) return new Response("Gone", { status: 410 });
 
@@ -34,6 +41,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/media/[id]/f
     "cache-control": "private, max-age=3600",
     "x-content-type-options": "nosniff",
   });
+  if (sp.get("download")) headers.set("content-disposition", `attachment; filename="${(asset.filename ?? "media").replace(/[^\w.\- ]+/g, "_")}"`);
   const range = req.headers.get("range");
   const m = range?.match(/bytes=(\d*)-(\d*)/);
   if (m) {
