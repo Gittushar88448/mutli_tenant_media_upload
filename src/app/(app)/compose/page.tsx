@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Compose" };
 
-export default async function ComposePage({ searchParams }: { searchParams: Promise<{ post?: string; duplicate?: string }> }) {
+export default async function ComposePage({ searchParams }: { searchParams: Promise<{ post?: string; duplicate?: string; caption?: string }> }) {
   const ctx = await getWorkspaceContext();
   const sp = await searchParams;
   const ws = oid(ctx.workspace.id);
@@ -60,6 +60,8 @@ export default async function ComposePage({ searchParams }: { searchParams: Prom
       };
     }
   }
+  // Discover's "Write a post with these" starts a post with its hashtags.
+  if (!initial && sp.caption) initial = { title: "", caption: sp.caption.slice(0, 5000), media: [], targets: [] };
 
   if (accounts.length === 0) {
     return (

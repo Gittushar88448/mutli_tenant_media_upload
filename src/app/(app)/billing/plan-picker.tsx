@@ -153,6 +153,7 @@ export function PlanPicker({
                 <li>
                   {limits.seats} {limits.seats === 1 ? "seat" : "seats"}
                 </li>
+                <li>{limits.discoverPerDay.toLocaleString()} Discover searches a day</li>
               </ul>
               <ul className="mt-4 flex-1 space-y-1.5 border-t pt-4 text-[13px]">
                 {(Object.keys(FEATURE_LABELS) as Feature[]).map((k) => (

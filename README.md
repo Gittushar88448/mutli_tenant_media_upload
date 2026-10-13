@@ -171,6 +171,21 @@ Instagram's and TikTok's song libraries aren't available to other apps through a
 
 `/live` reads each published post back from its platform: status, numbers and comments, cached for five minutes, with replies sent from Relay. Comments and replies: Instagram, Facebook Pages, YouTube, Threads, Reddit, Bluesky, Mastodon, Slack threads. Numbers only: X, TikTok, Discord. Status only: Telegram, WhatsApp, Pinterest, LinkedIn, webhooks. Sandbox channels get simulated numbers and comments. The OAuth scopes for reading comments and insights are in `src/lib/platforms.ts`; accounts connected earlier need to reconnect to grant them.
 
+## Discover
+
+`/discover` searches public content across platforms for a topic or hashtag, filters it by views, likes and comments (presets or any number), ranks it and extracts the hashtags, keywords and phrases the top results share, weighted by log reach times engagement (`src/lib/discover/keywords.ts`). Providers live in `src/lib/discover/providers.ts`:
+
+| Platform | Needs | Downloads |
+| --- | --- | --- |
+| YouTube | `YOUTUBE_API_KEY` (Google Cloud → YouTube Data API v3) | thumbnails |
+| Instagram | a connected Instagram business account (30 hashtags per 7 days) | thumbnails |
+| Reddit | nothing; `REDDIT_CLIENT_ID`/`SECRET` raise rate limits | images, video 240p to 1080p with sound |
+| Bluesky | nothing | images, video |
+| Mastodon | nothing; `MASTODON_DISCOVER_INSTANCE` picks the server | images, video |
+| X | `X_BEARER_TOKEN` (paid API tier) | thumbnails |
+
+YouTube, Instagram and X forbid saving their media in their developer terms, so only thumbnails are offered. TikTok, Facebook, LinkedIn and Threads have no public search API. Only YouTube and X expose view counts; a threshold is skipped on platforms that don't publish that number. Results are cached for 30 minutes per query, and fresh searches count toward `discoverPerDay` in `src/lib/plans.ts`. Downloads go through `/api/discover/download`, which only fetches URLs signed by the search that listed them. In demo mode, platforms without keys return sample results marked as such.
+
 ## Not built yet
 
 - n8n connectors for YouTube, TikTok, LinkedIn, X, Threads and Pinterest. The publish-target workflow routes them to a fallback that reports `CONNECTOR_NOT_BUILT`. Instagram, Facebook Pages, webhooks, manual reminders and sandbox are wired.

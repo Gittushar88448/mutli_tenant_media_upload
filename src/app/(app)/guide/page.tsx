@@ -27,9 +27,10 @@ const TOC = [
   { id: "compose", n: "04", label: "Write and schedule" },
   { id: "media", n: "05", label: "Edit media and add music" },
   { id: "live", n: "06", label: "Watch it live" },
-  { id: "pricing", n: "07", label: "Plans and pricing" },
-  { id: "team", n: "08", label: "Team and roles" },
-  { id: "faq", n: "09", label: "Questions" },
+  { id: "discover", n: "07", label: "Find what's working" },
+  { id: "pricing", n: "08", label: "Plans and pricing" },
+  { id: "team", n: "09", label: "Team and roles" },
+  { id: "faq", n: "10", label: "Questions" },
 ];
 
 const ROLES = ["owner", "admin", "editor", "approver", "viewer"] as const;
@@ -279,8 +280,20 @@ export default async function GuidePage() {
             </p>
           </section>
 
+          <section id="discover" className="scroll-mt-20">
+            <SectionTitle n="07" aside={<Link href="/discover" className="text-xs text-muted-foreground hover:text-foreground">Discover →</Link>}>
+              Find what&apos;s working
+            </SectionTitle>
+            <p className="max-w-3xl text-[14px] leading-relaxed text-muted-foreground">
+              <b className="font-medium text-foreground">Discover</b> searches each platform&apos;s own public data for a topic or hashtag, keeps the shorts, videos and posts above the views, likes and comments you set (pick a preset or type any number), and ranks them. The <b className="font-medium text-foreground">Keywords</b> panel pulls out the hashtags, words and phrases that top content shares, weighted by reach and engagement, so you can copy them or start a post with them. Results export as CSV or JSON.
+            </p>
+            <p className="mt-3 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+              Searchable: YouTube (needs a YouTube API key), Instagram hashtags (needs a connected business account, 30 hashtags a week), Reddit, Bluesky, Mastodon and X (needs a paid API token). Only YouTube and X publish view counts; elsewhere the views filter is skipped. TikTok, Facebook, LinkedIn and Threads don&apos;t offer a public search to apps. Downloads come in every size the platform serves: full video and images from Reddit, Bluesky and Mastodon, thumbnails only from YouTube, Instagram and X because their terms forbid saving the media. Credit the creator when you reuse anything.
+            </p>
+          </section>
+
           <section id="pricing" className="scroll-mt-20">
-            <SectionTitle n="07" aside={<Link href="/billing" className="text-xs text-muted-foreground hover:text-foreground">Plan & billing →</Link>}>
+            <SectionTitle n="08" aside={<Link href="/billing" className="text-xs text-muted-foreground hover:text-foreground">Plan & billing →</Link>}>
               Plans and pricing
             </SectionTitle>
             <p className="mb-5 max-w-3xl text-[14px] leading-relaxed">
@@ -309,6 +322,7 @@ export default async function GuidePage() {
                     { label: "Posts a month", v: (p: Plan) => PLAN_LIMITS[p].postsPerMonth.toLocaleString() },
                     { label: "Media storage", v: (p: Plan) => (PLAN_LIMITS[p].storageMb >= 1000 ? `${PLAN_LIMITS[p].storageMb / 1000} GB` : `${PLAN_LIMITS[p].storageMb} MB`) },
                     { label: "Team seats", v: (p: Plan) => String(PLAN_LIMITS[p].seats) },
+                    { label: "Discover searches a day", v: (p: Plan) => PLAN_LIMITS[p].discoverPerDay.toLocaleString() },
                   ].map((row) => (
                     <tr key={row.label} className="border-b">
                       <td className="px-4 py-2.5 text-muted-foreground">{row.label}</td>
@@ -357,7 +371,7 @@ export default async function GuidePage() {
           </section>
 
           <section id="team" className="scroll-mt-20">
-            <SectionTitle n="08" aside={<Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">Settings →</Link>}>
+            <SectionTitle n="09" aside={<Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">Settings →</Link>}>
               Team and roles
             </SectionTitle>
             <p className="mb-5 max-w-3xl text-[14px] leading-relaxed">
@@ -392,7 +406,7 @@ export default async function GuidePage() {
           </section>
 
           <section id="faq" className="scroll-mt-20">
-            <SectionTitle n="09">Questions</SectionTitle>
+            <SectionTitle n="10">Questions</SectionTitle>
             <Accordion type="multiple" className="rounded-xl border bg-card px-4">
               {FAQ.map((f, i) => (
                 <AccordionItem key={i} value={String(i)}>

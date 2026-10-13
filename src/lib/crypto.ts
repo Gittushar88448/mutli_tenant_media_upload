@@ -63,3 +63,15 @@ export function safeEqual(a: string, b: string) {
 export function randomToken(bytes = 24) {
   return randomBytes(bytes).toString("base64url");
 }
+
+/** Signs an outside media URL so /api/discover/download only fetches files Relay listed. */
+export function signDownloadUrl(url: string) {
+  return createHmac("sha256", signingKey()).update(`dl.${url}`).digest("base64url");
+}
+
+export function verifyDownloadUrl(url: string, sig: string | null) {
+  if (!sig) return false;
+  const expected = Buffer.from(signDownloadUrl(url));
+  const given = Buffer.from(sig);
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}

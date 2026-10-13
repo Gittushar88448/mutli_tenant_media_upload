@@ -5,7 +5,7 @@ import { SESSION_COOKIE, verifySession } from "@/lib/auth/jwt";
  * Fast gate in front of the app: no session, no app pages. Role and status are checked
  * again against the database in each layout, because a JWT can't know about a suspension.
  */
-const APP_PREFIXES = ["/dashboard", "/compose", "/communities", "/posts", "/calendar", "/media", "/accounts", "/billing", "/guide", "/live", "/settings", "/onboarding", "/admin"];
+const APP_PREFIXES = ["/dashboard", "/compose", "/communities", "/posts", "/calendar", "/media", "/accounts", "/billing", "/guide", "/live", "/discover", "/settings", "/onboarding", "/admin"];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;

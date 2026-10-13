@@ -25,7 +25,7 @@ type Target = Pick<PostTargetDoc, "_id" | "workspaceId" | "socialAccountId" | "p
 type Account = Pick<SocialAccountDoc, "_id" | "platform" | "externalId" | "handle" | "connector" | "sandbox" | "status">;
 
 /** Same rules as publishing/direct: one encrypted JSON blob, or an OAuth token refreshed near expiry. */
-async function loadSecrets(account: Account): Promise<Record<string, string>> {
+export async function loadSecrets(account: Account): Promise<Record<string, string>> {
   const cred = await OAuthCredential.findOne({ socialAccountId: account._id });
   if (!cred) throw new LiveError("No saved credentials. Reconnect this channel.", { auth: true });
   if (PLATFORMS[account.platform as TargetPlatform]?.oauth) {

@@ -5,11 +5,11 @@
 export const PLANS = ["free", "creator", "studio", "agency"] as const;
 export type Plan = (typeof PLANS)[number];
 
-export const PLAN_LIMITS: Record<Plan, { accounts: number; postsPerMonth: number; storageMb: number; seats: number }> = {
-  free: { accounts: 3, postsPerMonth: 30, storageMb: 500, seats: 1 },
-  creator: { accounts: 8, postsPerMonth: 300, storageMb: 10_000, seats: 2 },
-  studio: { accounts: 25, postsPerMonth: 2000, storageMb: 50_000, seats: 10 },
-  agency: { accounts: 150, postsPerMonth: 20000, storageMb: 500_000, seats: 50 },
+export const PLAN_LIMITS: Record<Plan, { accounts: number; postsPerMonth: number; storageMb: number; seats: number; discoverPerDay: number }> = {
+  free: { accounts: 3, postsPerMonth: 30, storageMb: 500, seats: 1, discoverPerDay: 10 },
+  creator: { accounts: 8, postsPerMonth: 300, storageMb: 10_000, seats: 2, discoverPerDay: 100 },
+  studio: { accounts: 25, postsPerMonth: 2000, storageMb: 50_000, seats: 10, discoverPerDay: 400 },
+  agency: { accounts: 150, postsPerMonth: 20000, storageMb: 500_000, seats: 50, discoverPerDay: 2000 },
 };
 
 export type Feature = "channelCaptions" | "channelVideoEdits" | "polls" | "editAfterPublish" | "liveEdits" | "mediaStudio";
